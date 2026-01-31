@@ -114,20 +114,20 @@ def get_current_raffle():
     """Get or create the current pending raffle."""
     raffle = Raffle.query.filter_by(status='pending').first()
     if not raffle:
-        # Create new raffle with next draw time at :30 (half hour)
+        # Create new raffle with next draw time at :00 or :30 (every 30 min)
         # Using UTC+2 timezone (South Africa / SAST)
         UTC_OFFSET = 2  # UTC+2
         
         now_utc = datetime.utcnow()
         now_local = now_utc + timedelta(hours=UTC_OFFSET)
         
-        # Find next :30 in local time
+        # Find next :00 or :30 in local time
         if now_local.minute < 30:
-            # Next :30 is this hour
+            # Next is :30 this hour
             next_draw_local = now_local.replace(minute=30, second=0, microsecond=0)
         else:
-            # Next :30 is next hour
-            next_draw_local = now_local.replace(minute=30, second=0, microsecond=0) + timedelta(hours=1)
+            # Next is :00 next hour
+            next_draw_local = now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
         
         # Convert back to UTC for storage
         next_draw_utc = next_draw_local - timedelta(hours=UTC_OFFSET)
@@ -438,7 +438,7 @@ def trigger_draw():
 
 @app.route('/api/raffle/reset-timer', methods=['POST'])
 def reset_timer():
-    """Reset the current raffle's draw time to next :30."""
+    """Reset the current raffle's draw time to next :00 or :30."""
     raffle = Raffle.query.filter_by(status='pending').first()
     if not raffle:
         return jsonify({'error': 'No pending raffle'}), 400
@@ -447,11 +447,11 @@ def reset_timer():
     now_utc = datetime.utcnow()
     now_local = now_utc + timedelta(hours=UTC_OFFSET)
     
-    # Find next :30 in local time
+    # Find next :00 or :30 in local time
     if now_local.minute < 30:
         next_draw_local = now_local.replace(minute=30, second=0, microsecond=0)
     else:
-        next_draw_local = now_local.replace(minute=30, second=0, microsecond=0) + timedelta(hours=1)
+        next_draw_local = now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
     
     # Convert back to UTC for storage
     next_draw_utc = next_draw_local - timedelta(hours=UTC_OFFSET)
