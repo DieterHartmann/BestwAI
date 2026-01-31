@@ -114,27 +114,25 @@ def get_current_raffle():
     """Get or create the current pending raffle."""
     raffle = Raffle.query.filter_by(status='pending').first()
     if not raffle:
-        # Create new raffle with next draw time at the top of the hour
+        # Create new raffle with next draw time at :30 (half hour)
         # Using UTC+2 timezone (South Africa / SAST)
         UTC_OFFSET = 2  # UTC+2
         
         now_utc = datetime.utcnow()
         now_local = now_utc + timedelta(hours=UTC_OFFSET)
         
-        # Find next hour in local time
-        next_hour_local = now_local.replace(minute=0, second=0, microsecond=0)
-        if now_local.minute > 0 or now_local.second > 0:
-            next_hour_local += timedelta(hours=1)
-        
-        # If before 13:00 local, set to 13:00 today
-        start_hour = 13  # 1 PM local time
-        if next_hour_local.hour < start_hour:
-            next_hour_local = next_hour_local.replace(hour=start_hour)
+        # Find next :30 in local time
+        if now_local.minute < 30:
+            # Next :30 is this hour
+            next_draw_local = now_local.replace(minute=30, second=0, microsecond=0)
+        else:
+            # Next :30 is next hour
+            next_draw_local = now_local.replace(minute=30, second=0, microsecond=0) + timedelta(hours=1)
         
         # Convert back to UTC for storage
-        next_hour_utc = next_hour_local - timedelta(hours=UTC_OFFSET)
+        next_draw_utc = next_draw_local - timedelta(hours=UTC_OFFSET)
         
-        raffle = Raffle(draw_time=next_hour_utc, status='pending')
+        raffle = Raffle(draw_time=next_draw_utc, status='pending')
         db.session.add(raffle)
         db.session.commit()
     return raffle
@@ -389,12 +387,12 @@ def get_current_raffle_info():
     return jsonify({
         'raffle_id': raffle.id,
         'status': raffle.status,
-        'draw_time': raffle.draw_time.isoformat(),
+        'draw_time': raffle.draw_time.isoformat() + 'Z',  # Z indicates UTC
         'total_pot': raffle.total_pot,
         'participant_count': len(participants),
         'total_entries': total_entries,
         'participants': participants,
-        'server_time': datetime.utcnow().isoformat()
+        'server_time': datetime.utcnow().isoformat() + 'Z'
     })
 
 @app.route('/api/raffle/draw', methods=['POST'])
