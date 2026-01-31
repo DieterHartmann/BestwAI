@@ -155,65 +155,70 @@
             <h1>🎰 BestwAI Raffle</h1>
         </header>
 
-        <!-- Main Display Area -->
+        <!-- Main Display Area - New Grid Layout -->
         <main class="display-main">
-            <!-- QR Codes Section - Prominent! -->
-            <section class="qr-section">
-                <div class="qr-card">
-                    <h2>📱 SCAN TO JOIN RAFFLE</h2>
-                    <div class="qr-code">
-                        <img src="data:image/png;base64,{{ qr_code }}" alt="Scan to join raffle">
+            <!-- Top Row: QR Codes + Countdown + Stats -->
+            <div class="top-row">
+                <!-- QR Codes Side by Side -->
+                <div class="qr-section">
+                    <div class="qr-card">
+                        <h2>📱 JOIN RAFFLE</h2>
+                        <div class="qr-code">
+                            <img src="data:image/png;base64,{{ qr_code }}" alt="Scan to join">
+                        </div>
                     </div>
-                    <p class="qr-url">{{ signup_url }}</p>
-                </div>
-                <div class="qr-card telegram-card" id="telegramCard">
-                    <h2>💬 SEND LIVE MESSAGE</h2>
-                    <div class="qr-code" id="telegramQr">
-                        <p style="color: #888;">Loading...</p>
+                    <div class="qr-card telegram-card" id="telegramCard">
+                        <h2>💬 SEND MESSAGE</h2>
+                        <div class="qr-code" id="telegramQr">
+                            <p style="color: #888;">Loading...</p>
+                        </div>
+                        <p class="qr-url" id="telegramBotName">@bot</p>
                     </div>
-                    <p class="qr-url" id="telegramBotName">@bot</p>
                 </div>
-            </section>
 
-            <!-- Countdown Section -->
-            <section class="countdown-section">
-                <div class="countdown-label">Next Draw In</div>
-                <div class="countdown-timer" id="countdownTimer">--:--:--</div>
-                <div class="status-indicator" id="statusIndicator">
-                    <span class="status-dot"></span>
-                    <span class="status-text">Accepting Entries</span>
+                <!-- Countdown + Stats -->
+                <div class="countdown-stats">
+                    <div class="countdown-section">
+                        <div class="countdown-label">Next Draw In</div>
+                        <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+                    </div>
+                    <div class="stats-section">
+                        <div class="big-stat pot-stat">
+                            <div class="stat-value">$<span id="displayPot">0</span></div>
+                            <div class="stat-label">Prize Pot</div>
+                        </div>
+                        <div class="big-stat participants-stat">
+                            <div class="stat-value" id="displayParticipants">0</div>
+                            <div class="stat-label">Entries</div>
+                        </div>
+                    </div>
                 </div>
-            </section>
 
-            <!-- Pot & Participants -->
-            <section class="stats-section">
-                <div class="big-stat pot-stat">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-value">$<span id="displayPot">0</span></div>
-                    <div class="stat-label">Prize Pot</div>
+                <!-- Recent Draws -->
+                <div class="winners-sidebar">
+                    <h2>🏆 Recent Draws</h2>
+                    <div class="history-list" id="historyList">
+                        <p class="no-history">No draws yet</p>
+                    </div>
                 </div>
-                <div class="big-stat participants-stat">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value" id="displayParticipants">0</div>
-                    <div class="stat-label">Verified Entries</div>
-                </div>
-            </section>
+            </div>
 
-            <!-- Participants List -->
-            <section class="participants-section">
-                <h2>Current Participants</h2>
-                <div class="participants-grid" id="participantsGrid">
-                    <p class="no-participants">Scan QR code to join!</p>
-                </div>
-            </section>
+            <!-- Bottom Row: Participants + Messages -->
+            <div class="bottom-row">
+                <section class="participants-section">
+                    <h2>👥 Participants</h2>
+                    <div class="participants-grid" id="participantsGrid">
+                        <p class="no-participants">Scan QR code to join!</p>
+                    </div>
+                </section>
 
-            <!-- Telegram Messages -->
-            <section class="telegram-section" id="telegramSection">
-                <h2>💬 Live Messages from Telegram</h2>
-                <div class="telegram-messages" id="telegramMessages">
-                    <p class="no-messages">Scan the Telegram QR code above and send a message!</p>
-                </div>
-            </section>
+                <section class="telegram-section" id="telegramSection">
+                    <h2>💬 Live Messages</h2>
+                    <div class="telegram-messages" id="telegramMessages">
+                        <p class="no-messages">Send a message via Telegram!</p>
+                    </div>
+                </section>
+            </div>
 
             <!-- Draw Animation Overlay -->
             <div class="draw-overlay hidden" id="drawOverlay">
@@ -229,14 +234,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Recent Winners Sidebar -->
-        <aside class="winners-sidebar">
-            <h2>🏆 Recent Draws</h2>
-            <div class="history-list" id="historyList">
-                <p class="no-history">No draws yet</p>
-            </div>
-        </aside>
     </div>
 
     <script src="{{ url_for('static', filename='js/display.js') }}"></script>
