@@ -417,6 +417,35 @@ def trigger_draw():
         return jsonify(result)
     return jsonify({'error': 'No active raffle to draw'}), 400
 
+@app.route('/api/raffle/reset-timer', methods=['POST'])
+def reset_timer():
+    """Reset the current raffle's draw time to next :30."""
+    raffle = Raffle.query.filter_by(status='pending').first()
+    if not raffle:
+        return jsonify({'error': 'No pending raffle'}), 400
+    
+    UTC_OFFSET = 2  # UTC+2
+    now_utc = datetime.utcnow()
+    now_local = now_utc + timedelta(hours=UTC_OFFSET)
+    
+    # Find next :30 in local time
+    if now_local.minute < 30:
+        next_draw_local = now_local.replace(minute=30, second=0, microsecond=0)
+    else:
+        next_draw_local = now_local.replace(minute=30, second=0, microsecond=0) + timedelta(hours=1)
+    
+    # Convert back to UTC for storage
+    next_draw_utc = next_draw_local - timedelta(hours=UTC_OFFSET)
+    
+    raffle.draw_time = next_draw_utc
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'new_draw_time': raffle.draw_time.isoformat() + 'Z',
+        'local_time': next_draw_local.strftime('%H:%M')
+    })
+
 @app.route('/api/raffle/history')
 def get_raffle_history():
     """Get recent raffle history."""
