@@ -67,3 +67,5 @@ Thumbs.db
 
 # Project specific
 *.log
+instance/
+raffle.db

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BestwAI Raffle - Live Display</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/display.css') }}">
+</head>
+<body class="display-page">
+    <!-- Confetti Canvas -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <div class="display-container">
+        <header class="display-header">
+            <h1>🎰 BestwAI Raffle</h1>
+        </header>
+
+        <!-- Main Display Area -->
+        <main class="display-main">
+            <!-- Countdown Section -->
+            <section class="countdown-section">
+                <div class="countdown-label">Next Draw In</div>
+                <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Accepting Entries</span>
+                </div>
+            </section>
+
+            <!-- Pot & Participants -->
+            <section class="stats-section">
+                <div class="big-stat pot-stat">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="displayPot">0</div>
+                    <div class="stat-label">Token Pot</div>
+                </div>
+                <div class="big-stat participants-stat">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="displayParticipants">0</div>
+                    <div class="stat-label">Participants</div>
+                </div>
+            </section>
+
+            <!-- Participants List -->
+            <section class="participants-section">
+                <h2>Current Participants</h2>
+                <div class="participants-grid" id="participantsGrid">
+                    <p class="no-participants">Waiting for entries...</p>
+                </div>
+            </section>
+
+            <!-- Draw Animation Overlay -->
+            <div class="draw-overlay hidden" id="drawOverlay">
+                <div class="draw-content">
+                    <h2 class="draw-title">🎲 DRAWING WINNERS 🎲</h2>
+                    <div class="spinning-tokens" id="spinningTokens">
+                        <div class="spin-token">TKN-XXXXXX</div>
+                    </div>
+                    <div class="winners-reveal hidden" id="winnersReveal">
+                        <h2>🎉 WINNERS 🎉</h2>
+                        <div class="winner-list" id="winnerList"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Recent Winners Sidebar -->
+        <aside class="winners-sidebar">
+            <h2>🏆 Recent Draws</h2>
+            <div class="history-list" id="historyList">
+                <p class="no-history">No draws yet</p>
+            </div>
+        </aside>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/display.js') }}"></script>
+</body>
+</html>

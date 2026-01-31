@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BestwAI Raffle - Enter Now</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="user-page">
+    <div class="container">
+        <header>
+            <h1>🎰 BestwAI Raffle</h1>
+            <p class="subtitle">Enter your token to win big!</p>
+        </header>
+
+        <!-- Token Input Section -->
+        <section class="token-input-section" id="tokenInputSection">
+            <div class="card">
+                <h2>Enter Your Token ID</h2>
+                <div class="input-group">
+                    <input type="text" id="tokenInput" placeholder="TKN-XXXXXX" 
+                           value="{{ token_id }}" autocomplete="off" maxlength="10">
+                    <button id="checkTokenBtn" class="btn btn-primary">Check Balance</button>
+                </div>
+                <p class="hint">Your token ID is on your entry card</p>
+            </div>
+        </section>
+
+        <!-- Token Info Section (hidden until token is verified) -->
+        <section class="token-info-section hidden" id="tokenInfoSection">
+            <div class="card balance-card">
+                <div class="token-header">
+                    <span class="token-label">Token:</span>
+                    <span class="token-value" id="displayTokenId">TKN-XXXXXX</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">Your Balance</span>
+                    <span class="balance-value" id="balanceValue">0</span>
+                    <span class="balance-unit">tokens</span>
+                </div>
+                <div class="stats-row">
+                    <div class="stat">
+                        <span class="stat-value" id="totalWins">0</span>
+                        <span class="stat-label">Wins</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="totalWinnings">0</span>
+                        <span class="stat-label">Total Won</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="currentEntries">0</span>
+                        <span class="stat-label">Entries</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entry Section -->
+            <div class="card entry-card">
+                <h2>Enter Current Raffle</h2>
+                <div class="entry-cost">
+                    <span>Entry Cost:</span>
+                    <span id="entryCost">10</span> tokens each
+                </div>
+                <div class="entry-controls">
+                    <button class="btn btn-secondary" id="decreaseEntries">-</button>
+                    <span class="entry-count" id="entryCount">1</span>
+                    <button class="btn btn-secondary" id="increaseEntries">+</button>
+                </div>
+                <div class="total-cost">
+                    Total: <span id="totalCost">10</span> tokens
+                </div>
+                <button id="enterRaffleBtn" class="btn btn-success btn-large">
+                    Enter Raffle
+                </button>
+                <p class="entry-feedback hidden" id="entryFeedback"></p>
+            </div>
+        </section>
+
+        <!-- Raffle Info Section -->
+        <section class="raffle-info-section">
+            <div class="card raffle-card">
+                <h2>Current Raffle</h2>
+                <div class="countdown-container">
+                    <span class="countdown-label">Next Draw In</span>
+                    <div class="countdown" id="countdown">--:--:--</div>
+                </div>
+                <div class="raffle-stats">
+                    <div class="raffle-stat">
+                        <span class="raffle-stat-value" id="potSize">0</span>
+                        <span class="raffle-stat-label">Token Pot</span>
+                    </div>
+                    <div class="raffle-stat">
+                        <span class="raffle-stat-value" id="participantCount">0</span>
+                        <span class="raffle-stat-label">Participants</span>
+                    </div>
+                </div>
+                <div class="prize-breakdown">
+                    <h4>Prize Distribution</h4>
+                    <div class="prize-list">
+                        <div class="prize">🥇 1st: 40%</div>
+                        <div class="prize">🥈 2nd: 25%</div>
+                        <div class="prize">🥉 3rd: 18%</div>
+                        <div class="prize">4th: 10%</div>
+                        <div class="prize">5th: 7%</div>
+                    </div>
+                    <p class="house-note">10% house edge</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Winners -->
+        <section class="winners-section">
+            <div class="card">
+                <h2>🏆 Recent Winners</h2>
+                <div id="recentWinners" class="winners-list">
+                    <p class="no-winners">No winners yet</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <a href="/display" class="link">View Display Screen</a>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/user.js') }}"></script>
+</body>
+</html>

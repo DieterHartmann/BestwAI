@@ -1,0 +1,524 @@
+/* =============================================================================
+   BestwAI Raffle - Main Styles
+   ============================================================================= */
+
+/* CSS Variables */
+:root {
+    --primary-color: #3b82f6;
+    --primary-dark: #2563eb;
+    --success-color: #22c55e;
+    --success-dark: #16a34a;
+    --warning-color: #f59e0b;
+    --warning-dark: #d97706;
+    --danger-color: #ef4444;
+    --danger-dark: #dc2626;
+    --gold-color: #fbbf24;
+    --silver-color: #9ca3af;
+    --bronze-color: #cd7c32;
+    
+    --bg-color: #0f172a;
+    --bg-secondary: #1e293b;
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    
+    --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --border-radius: 12px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+/* Container */
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.card h2 {
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--border-color);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: var(--success-dark);
+}
+
+.btn-warning {
+    background: var(--warning-color);
+    color: #000;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: var(--warning-dark);
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: var(--danger-dark);
+}
+
+.btn-large {
+    width: 100%;
+    padding: 1rem 2rem;
+    font-size: 1.25rem;
+}
+
+/* Form Elements */
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    transition: border-color 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+input[type="text"]::placeholder {
+    color: var(--text-muted);
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* =============================================================================
+   User Page Specific Styles
+   ============================================================================= */
+
+.user-page header {
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+}
+
+.user-page header h1 {
+    font-size: 1.75rem;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+/* Token Input Section */
+.token-input-section .input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.token-input-section input {
+    flex: 1;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.hint {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Balance Card */
+.balance-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+    border: 1px solid var(--primary-color);
+}
+
+.token-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.token-label {
+    color: var(--text-muted);
+}
+
+.token-value {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.balance-display {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.balance-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.balance-value {
+    display: block;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--success-color);
+    line-height: 1.2;
+}
+
+.balance-unit {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+/* Entry Card */
+.entry-card {
+    text-align: center;
+}
+
+.entry-cost {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.entry-cost span:last-child {
+    font-weight: bold;
+    color: var(--warning-color);
+}
+
+.entry-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.entry-controls .btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    font-size: 1.5rem;
+}
+
+.entry-count {
+    font-size: 2rem;
+    font-weight: 700;
+    min-width: 60px;
+}
+
+.total-cost {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+}
+
+.total-cost span {
+    font-weight: bold;
+    color: var(--warning-color);
+}
+
+.entry-feedback {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.entry-feedback.success {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--success-color);
+}
+
+.entry-feedback.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger-color);
+}
+
+/* Raffle Card */
+.raffle-card {
+    text-align: center;
+}
+
+.countdown-container {
+    padding: 1rem 0;
+}
+
+.countdown-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.countdown {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--primary-color);
+    margin: 0.5rem 0;
+}
+
+.raffle-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.raffle-stat {
+    text-align: center;
+}
+
+.raffle-stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gold-color);
+}
+
+.raffle-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.prize-breakdown {
+    padding-top: 1rem;
+}
+
+.prize-breakdown h4 {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.prize-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.prize {
+    background: var(--bg-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+}
+
+.house-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* Winners Section */
+.winners-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.winner-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.winner-token {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.winner-amount {
+    color: var(--gold-color);
+    font-weight: 600;
+}
+
+.no-winners {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 1rem;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1rem;
+}
+
+footer .link {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+footer .link:hover {
+    text-decoration: underline;
+}
+
+/* =============================================================================
+   Responsive Design
+   ============================================================================= */
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0.75rem;
+    }
+    
+    .card {
+        padding: 1rem;
+    }
+    
+    .balance-value {
+        font-size: 2.5rem;
+    }
+    
+    .countdown {
+        font-size: 2rem;
+    }
+    
+    .token-input-section .input-group {
+        flex-direction: column;
+    }
+    
+    .token-input-section .btn {
+        width: 100%;
+    }
+}
