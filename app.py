@@ -564,8 +564,21 @@ def debug_database():
     participants = Participant.query.all()
     entries = Entry.query.filter_by(raffle_id=raffle.id).all()
     
+    # Check all database-related env vars
+    env_vars = {}
+    for key in os.environ:
+        if 'DATABASE' in key.upper() or 'PG' in key.upper() or 'POSTGRES' in key.upper():
+            val = os.environ[key]
+            # Mask password in URL
+            if 'postgresql://' in val or 'postgres://' in val:
+                env_vars[key] = val[:30] + '...[masked]'
+            else:
+                env_vars[key] = val[:50] if len(val) > 50 else val
+    
     return jsonify({
-        'database_url': app.config['SQLALCHEMY_DATABASE_URI'][:30] + '...',
+        'database_url_configured': app.config['SQLALCHEMY_DATABASE_URI'][:30] + '...',
+        'env_database_url': os.environ.get('DATABASE_URL', 'NOT SET')[:30] + '...' if os.environ.get('DATABASE_URL') else 'NOT SET',
+        'all_db_env_vars': env_vars,
         'raffle': {
             'id': raffle.id,
             'status': raffle.status,
