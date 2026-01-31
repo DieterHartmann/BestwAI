@@ -19,7 +19,13 @@ import base64
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///raffle.db')
+
+# Database configuration - support both SQLite and PostgreSQL
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///raffle.db')
+# Railway uses postgres:// but SQLAlchemy needs postgresql://
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
@@ -531,6 +537,36 @@ def reset_system():
     get_current_raffle()
     
     return jsonify({'success': True, 'message': 'System reset complete'})
+
+@app.route('/api/debug')
+def debug_database():
+    """Debug endpoint to check database contents."""
+    raffle = get_current_raffle()
+    
+    participants = Participant.query.all()
+    entries = Entry.query.filter_by(raffle_id=raffle.id).all()
+    
+    return jsonify({
+        'database_url': app.config['SQLALCHEMY_DATABASE_URI'][:30] + '...',
+        'raffle': {
+            'id': raffle.id,
+            'status': raffle.status,
+            'total_pot': raffle.total_pot,
+            'draw_time': raffle.draw_time.isoformat()
+        },
+        'total_participants': len(participants),
+        'participants': [{
+            'id': p.id,
+            'name': p.name,
+            'wager': p.wager_amount,
+            'verified': p.verified
+        } for p in participants],
+        'entries_in_raffle': len(entries),
+        'entries': [{
+            'participant_id': e.participant_id,
+            'entry_count': e.entry_count
+        } for e in entries]
+    })
 
 # =============================================================================
 # Scheduler for Automated Draws

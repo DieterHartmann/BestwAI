@@ -4,3 +4,4 @@ gunicorn
 APScheduler
 qrcode[pil]
 Pillow
+psycopg2-binary
