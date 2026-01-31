@@ -575,10 +575,14 @@ def debug_database():
             else:
                 env_vars[key] = val[:50] if len(val) > 50 else val
     
+    # Show ALL env var names (not values) to help debug
+    all_env_keys = sorted([k for k in os.environ.keys()])
+    
     return jsonify({
         'database_url_configured': app.config['SQLALCHEMY_DATABASE_URI'][:30] + '...',
         'env_database_url': os.environ.get('DATABASE_URL', 'NOT SET')[:30] + '...' if os.environ.get('DATABASE_URL') else 'NOT SET',
         'all_db_env_vars': env_vars,
+        'all_env_keys': all_env_keys,
         'raffle': {
             'id': raffle.id,
             'status': raffle.status,
