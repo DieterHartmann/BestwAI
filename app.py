@@ -114,10 +114,21 @@ def get_current_raffle():
     """Get or create the current pending raffle."""
     raffle = Raffle.query.filter_by(status='pending').first()
     if not raffle:
-        # Create new raffle with next draw time
-        interval = int(get_config('draw_interval', 60))  # minutes
-        next_draw = datetime.utcnow() + timedelta(minutes=interval)
-        raffle = Raffle(draw_time=next_draw, status='pending')
+        # Create new raffle with next draw time at the top of the hour
+        # Starting from 13:00 (1 PM), hourly thereafter
+        now = datetime.utcnow()
+        
+        # Find next hour
+        next_hour = now.replace(minute=0, second=0, microsecond=0)
+        if now.minute > 0 or now.second > 0:
+            next_hour += timedelta(hours=1)
+        
+        # If before 13:00, set to 13:00 today
+        start_hour = 13  # 1 PM
+        if next_hour.hour < start_hour:
+            next_hour = next_hour.replace(hour=start_hour)
+        
+        raffle = Raffle(draw_time=next_hour, status='pending')
         db.session.add(raffle)
         db.session.commit()
     return raffle
@@ -179,12 +190,12 @@ def execute_raffle_draw(raffle_id=None):
         
         # Calculate payouts
         total_pot = raffle.total_pot
-        house_cut = int(total_pot * 0.10)  # 10% house edge
+        house_cut = int(total_pot * 0.20)  # 20% house edge
         prize_pool = total_pot - house_cut
         
-        # Winner distribution (5 winners max)
+        # Winner distribution (2 winners: 50% first, 30% second)
         unique_participants = list(set(weighted_entries))
-        winner_count = min(5, len(unique_participants))
+        winner_count = min(2, len(unique_participants))
         
         if winner_count == 0:
             raffle.status = 'completed'
@@ -192,10 +203,11 @@ def execute_raffle_draw(raffle_id=None):
             get_current_raffle()
             return {'winners': [], 'pot': 0, 'raffle_id': raffle.id}
         
-        # Distribution percentages for 5 winners: 40%, 25%, 18%, 10%, 7%
-        distributions = [0.40, 0.25, 0.18, 0.10, 0.07][:winner_count]
-        total_dist = sum(distributions)
-        distributions = [d / total_dist for d in distributions]
+        # Distribution: 50% to 1st, 30% to 2nd (of the 80% prize pool)
+        # This means: 1st gets 50/80 = 62.5% of prize pool, 2nd gets 30/80 = 37.5%
+        distributions = [0.625, 0.375][:winner_count]
+        if winner_count == 1:
+            distributions = [1.0]  # Single winner gets entire prize pool
         
         # Select winners (weighted random, no duplicates)
         winners_data = []
