@@ -135,6 +135,20 @@ def get_current_raffle():
         raffle = Raffle(draw_time=next_draw_utc, status='pending')
         db.session.add(raffle)
         db.session.commit()
+        
+        # Auto-add ALL verified participants to new raffle
+        verified_participants = Participant.query.filter_by(verified=True).all()
+        for participant in verified_participants:
+            entry_count = participant.wager_amount // 10
+            entry = Entry(
+                raffle_id=raffle.id,
+                participant_id=participant.id,
+                entry_count=entry_count
+            )
+            db.session.add(entry)
+            raffle.total_pot += participant.wager_amount
+        db.session.commit()
+        
     return raffle
 
 def add_verified_participant_to_raffle(participant):
