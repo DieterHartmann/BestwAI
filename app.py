@@ -115,20 +115,26 @@ def get_current_raffle():
     raffle = Raffle.query.filter_by(status='pending').first()
     if not raffle:
         # Create new raffle with next draw time at the top of the hour
-        # Starting from 13:00 (1 PM), hourly thereafter
-        now = datetime.utcnow()
+        # Using UTC+2 timezone (South Africa / SAST)
+        UTC_OFFSET = 2  # UTC+2
         
-        # Find next hour
-        next_hour = now.replace(minute=0, second=0, microsecond=0)
-        if now.minute > 0 or now.second > 0:
-            next_hour += timedelta(hours=1)
+        now_utc = datetime.utcnow()
+        now_local = now_utc + timedelta(hours=UTC_OFFSET)
         
-        # If before 13:00, set to 13:00 today
-        start_hour = 13  # 1 PM
-        if next_hour.hour < start_hour:
-            next_hour = next_hour.replace(hour=start_hour)
+        # Find next hour in local time
+        next_hour_local = now_local.replace(minute=0, second=0, microsecond=0)
+        if now_local.minute > 0 or now_local.second > 0:
+            next_hour_local += timedelta(hours=1)
         
-        raffle = Raffle(draw_time=next_hour, status='pending')
+        # If before 13:00 local, set to 13:00 today
+        start_hour = 13  # 1 PM local time
+        if next_hour_local.hour < start_hour:
+            next_hour_local = next_hour_local.replace(hour=start_hour)
+        
+        # Convert back to UTC for storage
+        next_hour_utc = next_hour_local - timedelta(hours=UTC_OFFSET)
+        
+        raffle = Raffle(draw_time=next_hour_utc, status='pending')
         db.session.add(raffle)
         db.session.commit()
     return raffle
