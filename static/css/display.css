@@ -48,6 +48,38 @@
     position: relative;
 }
 
+/* QR Code Section */
+.qr-section {
+    display: flex;
+    justify-content: center;
+}
+
+.qr-card {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: var(--border-radius);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.qr-card h2 {
+    color: #1e293b;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.qr-code img {
+    max-width: 200px;
+    height: auto;
+}
+
+.qr-url {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.75rem;
+    word-break: break-all;
+}
+
 /* Countdown Section */
 .countdown-section {
     text-align: center;
@@ -175,8 +207,11 @@
     padding: 0.5rem 1rem;
     background: var(--bg-color);
     border-radius: 8px;
-    font-family: 'Courier New', monospace;
     font-size: 0.875rem;
+}
+
+.participant-name {
+    font-weight: 600;
 }
 
 .participant-entries {
@@ -184,6 +219,12 @@
     color: white;
     padding: 0.125rem 0.5rem;
     border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.participant-wager {
+    color: var(--success-color);
+    font-weight: 600;
     font-size: 0.75rem;
 }
 

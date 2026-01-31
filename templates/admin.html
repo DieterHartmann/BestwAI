@@ -11,7 +11,10 @@
     <div class="admin-container">
         <header class="admin-header">
             <h1>⚙️ Admin Panel</h1>
-            <a href="/" class="btn btn-secondary">← Back to Raffle</a>
+            <div class="header-links">
+                <a href="/" class="btn btn-secondary">← Signup Page</a>
+                <a href="/display" class="btn btn-secondary">📺 Display</a>
+            </div>
         </header>
 
         <main class="admin-main">
@@ -41,7 +44,7 @@
                         <span class="status-value" id="rafflePot">--</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">Participants:</span>
+                        <span class="status-label">Verified Entries:</span>
                         <span class="status-value" id="raffleParticipants">--</span>
                     </div>
                     <div class="status-item">
@@ -51,28 +54,23 @@
                 </div>
             </section>
 
-            <!-- Token Generator -->
-            <section class="admin-section">
-                <h2>Generate Tokens</h2>
-                <div class="generator-form">
-                    <div class="form-row">
-                        <label>Number of Tokens:</label>
-                        <input type="number" id="tokenCount" value="10" min="1" max="100">
-                    </div>
-                    <div class="form-row">
-                        <label>Starting Balance:</label>
-                        <input type="number" id="tokenBalance" value="100" min="1">
-                    </div>
-                    <button id="generateTokensBtn" class="btn btn-success">
-                        Generate Tokens
-                    </button>
+            <!-- Pending Verifications - Most Important! -->
+            <section class="admin-section highlight-section">
+                <h2>⚠️ Pending Payment Verification</h2>
+                <p class="section-hint">These users have signed up but payment hasn't been confirmed yet.</p>
+                <div id="pendingList" class="pending-list">
+                    <p class="no-pending">No pending verifications</p>
                 </div>
-                <div id="generatedTokens" class="generated-tokens hidden">
-                    <h3>Generated Tokens</h3>
-                    <div class="token-cards" id="tokenCards"></div>
-                    <button id="printTokensBtn" class="btn btn-primary">
-                        🖨️ Print Token Cards
-                    </button>
+            </section>
+
+            <!-- Verified Participants -->
+            <section class="admin-section">
+                <h2>✅ Verified Participants (In Raffle)</h2>
+                <button id="refreshBtn" class="btn btn-secondary btn-sm">
+                    🔄 Refresh
+                </button>
+                <div id="verifiedList" class="verified-list">
+                    <p class="no-verified">No verified participants yet</p>
                 </div>
             </section>
 
@@ -81,53 +79,23 @@
                 <h2>Configuration</h2>
                 <div class="config-form">
                     <div class="form-row">
-                        <label>Entry Cost (tokens):</label>
-                        <input type="number" id="configEntryCost" value="10" min="1">
-                    </div>
-                    <div class="form-row">
                         <label>Draw Interval (minutes):</label>
                         <input type="number" id="configDrawInterval" value="60" min="1">
                     </div>
                     <div class="form-row">
-                        <label>Default Starting Balance:</label>
-                        <input type="number" id="configStartingBalance" value="100" min="1">
+                        <label>Minimum Wager:</label>
+                        <input type="number" id="configMinWager" value="10" min="10" step="10">
+                    </div>
+                    <div class="form-row">
+                        <label>Maximum Wager:</label>
+                        <input type="number" id="configMaxWager" value="1000" min="10" step="10">
                     </div>
                     <button id="saveConfigBtn" class="btn btn-primary">
                         Save Configuration
                     </button>
                 </div>
             </section>
-
-            <!-- All Tokens -->
-            <section class="admin-section">
-                <h2>All Tokens</h2>
-                <button id="refreshTokensBtn" class="btn btn-secondary">
-                    🔄 Refresh
-                </button>
-                <div class="tokens-table-container">
-                    <table class="tokens-table" id="tokensTable">
-                        <thead>
-                            <tr>
-                                <th>Token ID</th>
-                                <th>Balance</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tokensTableBody">
-                            <tr>
-                                <td colspan="4">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
         </main>
-    </div>
-
-    <!-- Print Template (hidden) -->
-    <div id="printTemplate" class="print-template">
-        <div id="printContent"></div>
     </div>
 
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>

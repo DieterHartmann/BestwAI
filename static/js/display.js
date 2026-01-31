@@ -15,7 +15,7 @@ const displayParticipants = document.getElementById('displayParticipants');
 const participantsGrid = document.getElementById('participantsGrid');
 const historyList = document.getElementById('historyList');
 const drawOverlay = document.getElementById('drawOverlay');
-const spinningTokens = document.getElementById('spinningTokens');
+const spinningNames = document.getElementById('spinningNames');
 const winnersReveal = document.getElementById('winnersReveal');
 const winnerList = document.getElementById('winnerList');
 const confettiCanvas = document.getElementById('confettiCanvas');
@@ -107,14 +107,15 @@ function updateStatus(status) {
 // Update participants grid
 function updateParticipantsGrid(participants) {
     if (!participants || participants.length === 0) {
-        participantsGrid.innerHTML = '<p class="no-participants">Waiting for entries...</p>';
+        participantsGrid.innerHTML = '<p class="no-participants">Scan QR code to join!</p>';
         return;
     }
     
     participantsGrid.innerHTML = participants.map(p => `
         <div class="participant-tag">
-            <span>${p.token_id}</span>
+            <span class="participant-name">${p.name}</span>
             <span class="participant-entries">${p.entries}x</span>
+            <span class="participant-wager">$${p.wager}</span>
         </div>
     `).join('');
 }
@@ -128,12 +129,10 @@ async function checkForNewDraw() {
         if (data.raffle_id && data.raffle_id !== lastRaffleId && data.winners.length > 0) {
             lastRaffleId = data.raffle_id;
             
-            // If we're not already showing animation, show it now
             if (!isDrawing) {
                 showWinnersAnimation(data.winners, data.total_pot);
             }
             
-            // Reload history
             loadHistory();
         }
     } catch (error) {
@@ -155,13 +154,13 @@ async function loadHistory() {
         historyList.innerHTML = history.map(raffle => `
             <div class="history-item">
                 <div class="history-time">${formatTime(raffle.draw_time)}</div>
-                <div class="history-pot">💰 ${raffle.total_pot} tokens</div>
+                <div class="history-pot">💰 $${raffle.total_pot}</div>
                 <div class="history-winners">
                     ${raffle.winners.map(w => `
                         <div class="history-winner">
                             <span class="position">${getPositionEmoji(w.position)}</span>
-                            <span class="token">${w.token_id}</span>
-                            <span class="amount">+${w.amount}</span>
+                            <span class="name">${w.name}</span>
+                            <span class="amount">+$${w.amount}</span>
                         </div>
                     `).join('')}
                 </div>
@@ -177,31 +176,29 @@ async function startDrawAnimation() {
     isDrawing = true;
     drawOverlay.classList.remove('hidden');
     winnersReveal.classList.add('hidden');
-    spinningTokens.classList.remove('hidden');
+    spinningNames.classList.remove('hidden');
     
-    // Get participants for animation
     const participants = raffleData.participants || [];
     if (participants.length === 0) {
         endDrawAnimation();
         return;
     }
     
-    // Spin through tokens
-    const spinElement = spinningTokens.querySelector('.spin-token');
+    // Spin through names
+    const spinElement = spinningNames.querySelector('.spin-name');
     let spinCount = 0;
     const maxSpins = 30;
     
     const spinInterval = setInterval(() => {
         const randomParticipant = participants[Math.floor(Math.random() * participants.length)];
-        spinElement.textContent = randomParticipant.token_id;
+        spinElement.textContent = randomParticipant.name;
         spinCount++;
         
         if (spinCount >= maxSpins) {
             clearInterval(spinInterval);
-            // Wait for API to have winners ready
             setTimeout(fetchAndShowWinners, 1000);
         }
-    }, 100 + (spinCount * 10)); // Slow down over time
+    }, 100 + (spinCount * 10));
 }
 
 // Fetch winners and show reveal
@@ -213,7 +210,6 @@ async function fetchAndShowWinners() {
         if (data.winners && data.winners.length > 0) {
             showWinnersAnimation(data.winners, data.total_pot);
         } else {
-            // Try again in a second
             setTimeout(fetchAndShowWinners, 1000);
         }
     } catch (error) {
@@ -226,7 +222,7 @@ async function fetchAndShowWinners() {
 function showWinnersAnimation(winners, totalPot) {
     isDrawing = true;
     drawOverlay.classList.remove('hidden');
-    spinningTokens.classList.add('hidden');
+    spinningNames.classList.add('hidden');
     winnersReveal.classList.remove('hidden');
     winnerList.innerHTML = '';
     
@@ -237,17 +233,15 @@ function showWinnersAnimation(winners, totalPot) {
             winnerEl.className = `reveal-winner place-${winner.position}`;
             winnerEl.innerHTML = `
                 <span class="position">${getPositionEmoji(winner.position)}</span>
-                <span class="token">${winner.token_id}</span>
-                <span class="amount">+${winner.amount}</span>
+                <span class="name">${winner.name}</span>
+                <span class="amount">+$${winner.amount}</span>
             `;
             winnerList.appendChild(winnerEl);
             
-            // Start confetti on first winner
             if (index === 0) {
                 startConfetti();
             }
             
-            // End animation after last winner
             if (index === winners.length - 1) {
                 setTimeout(() => {
                     endDrawAnimation();
@@ -304,7 +298,6 @@ function animateConfetti() {
         ctx.fillRect(-piece.size / 2, -piece.size / 2, piece.size, piece.size);
         ctx.restore();
         
-        // Remove pieces that have fallen off screen
         if (piece.y > confettiCanvas.height + 20) {
             confettiPieces.splice(index, 1);
         }
@@ -320,18 +313,16 @@ function stopConfetti() {
     ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 }
 
-// Helper: Pad numbers
+// Helpers
 function pad(num) {
     return String(num).padStart(2, '0');
 }
 
-// Helper: Format time
 function formatTime(isoString) {
     const date = new Date(isoString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Helper: Get position emoji
 function getPositionEmoji(position) {
     const emojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
     return emojis[position - 1] || `${position}`;

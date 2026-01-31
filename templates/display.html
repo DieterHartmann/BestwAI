@@ -18,6 +18,17 @@
 
         <!-- Main Display Area -->
         <main class="display-main">
+            <!-- QR Code Section - Prominent! -->
+            <section class="qr-section">
+                <div class="qr-card">
+                    <h2>📱 SCAN TO JOIN</h2>
+                    <div class="qr-code">
+                        <img src="data:image/png;base64,{{ qr_code }}" alt="Scan to join raffle">
+                    </div>
+                    <p class="qr-url">{{ signup_url }}</p>
+                </div>
+            </section>
+
             <!-- Countdown Section -->
             <section class="countdown-section">
                 <div class="countdown-label">Next Draw In</div>
@@ -32,13 +43,13 @@
             <section class="stats-section">
                 <div class="big-stat pot-stat">
                     <div class="stat-icon">💰</div>
-                    <div class="stat-value" id="displayPot">0</div>
-                    <div class="stat-label">Token Pot</div>
+                    <div class="stat-value">$<span id="displayPot">0</span></div>
+                    <div class="stat-label">Prize Pot</div>
                 </div>
                 <div class="big-stat participants-stat">
                     <div class="stat-icon">👥</div>
                     <div class="stat-value" id="displayParticipants">0</div>
-                    <div class="stat-label">Participants</div>
+                    <div class="stat-label">Verified Entries</div>
                 </div>
             </section>
 
@@ -46,7 +57,7 @@
             <section class="participants-section">
                 <h2>Current Participants</h2>
                 <div class="participants-grid" id="participantsGrid">
-                    <p class="no-participants">Waiting for entries...</p>
+                    <p class="no-participants">Scan QR code to join!</p>
                 </div>
             </section>
 
@@ -54,8 +65,8 @@
             <div class="draw-overlay hidden" id="drawOverlay">
                 <div class="draw-content">
                     <h2 class="draw-title">🎲 DRAWING WINNERS 🎲</h2>
-                    <div class="spinning-tokens" id="spinningTokens">
-                        <div class="spin-token">TKN-XXXXXX</div>
+                    <div class="spinning-names" id="spinningNames">
+                        <div class="spin-name">???</div>
                     </div>
                     <div class="winners-reveal hidden" id="winnersReveal">
                         <h2>🎉 WINNERS 🎉</h2>

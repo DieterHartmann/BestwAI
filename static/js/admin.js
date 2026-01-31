@@ -5,46 +5,40 @@
 // DOM Elements
 const triggerDrawBtn = document.getElementById('triggerDrawBtn');
 const resetSystemBtn = document.getElementById('resetSystemBtn');
-const generateTokensBtn = document.getElementById('generateTokensBtn');
-const refreshTokensBtn = document.getElementById('refreshTokensBtn');
+const refreshBtn = document.getElementById('refreshBtn');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
-const printTokensBtn = document.getElementById('printTokensBtn');
 
-const tokenCountInput = document.getElementById('tokenCount');
-const tokenBalanceInput = document.getElementById('tokenBalance');
-const configEntryCost = document.getElementById('configEntryCost');
 const configDrawInterval = document.getElementById('configDrawInterval');
-const configStartingBalance = document.getElementById('configStartingBalance');
+const configMinWager = document.getElementById('configMinWager');
+const configMaxWager = document.getElementById('configMaxWager');
 
 const raffleStatus = document.getElementById('raffleStatus');
 const rafflePot = document.getElementById('rafflePot');
 const raffleParticipants = document.getElementById('raffleParticipants');
 const raffleDrawTime = document.getElementById('raffleDrawTime');
 
-const generatedTokensSection = document.getElementById('generatedTokens');
-const tokenCards = document.getElementById('tokenCards');
-const tokensTableBody = document.getElementById('tokensTableBody');
-const printContent = document.getElementById('printContent');
-
-// State
-let generatedTokensList = [];
+const pendingList = document.getElementById('pendingList');
+const verifiedList = document.getElementById('verifiedList');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadConfig();
     loadRaffleStatus();
-    loadTokens();
+    loadPendingParticipants();
+    loadAllParticipants();
     
     // Set up event listeners
     triggerDrawBtn.addEventListener('click', triggerDraw);
     resetSystemBtn.addEventListener('click', resetSystem);
-    generateTokensBtn.addEventListener('click', generateTokens);
-    refreshTokensBtn.addEventListener('click', loadTokens);
+    refreshBtn.addEventListener('click', () => {
+        loadPendingParticipants();
+        loadAllParticipants();
+    });
     saveConfigBtn.addEventListener('click', saveConfig);
-    printTokensBtn.addEventListener('click', printTokens);
     
-    // Auto-refresh status
+    // Auto-refresh
     setInterval(loadRaffleStatus, 5000);
+    setInterval(loadPendingParticipants, 5000);
 });
 
 // Load configuration
@@ -53,10 +47,9 @@ async function loadConfig() {
         const response = await fetch('/api/admin/config');
         const config = await response.json();
         
-        configEntryCost.value = config.entry_cost;
         configDrawInterval.value = config.draw_interval;
-        configStartingBalance.value = config.starting_balance;
-        tokenBalanceInput.value = config.starting_balance;
+        configMinWager.value = config.min_wager;
+        configMaxWager.value = config.max_wager;
     } catch (error) {
         console.error('Error loading config:', error);
     }
@@ -72,14 +65,14 @@ async function saveConfig() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                entry_cost: parseInt(configEntryCost.value),
                 draw_interval: parseInt(configDrawInterval.value),
-                starting_balance: parseInt(configStartingBalance.value)
+                min_wager: parseInt(configMinWager.value),
+                max_wager: parseInt(configMaxWager.value)
             })
         });
         
         if (response.ok) {
-            alert('Configuration saved successfully!');
+            alert('Configuration saved!');
         } else {
             alert('Error saving configuration');
         }
@@ -99,7 +92,7 @@ async function loadRaffleStatus() {
         const data = await response.json();
         
         raffleStatus.textContent = data.status.toUpperCase();
-        rafflePot.textContent = `${data.total_pot} tokens`;
+        rafflePot.textContent = `$${data.total_pot}`;
         raffleParticipants.textContent = data.participant_count;
         
         const drawTime = new Date(data.draw_time);
@@ -109,7 +102,112 @@ async function loadRaffleStatus() {
     }
 }
 
-// Trigger draw manually
+// Load pending participants (unverified)
+async function loadPendingParticipants() {
+    try {
+        const response = await fetch('/api/admin/participants/pending');
+        const participants = await response.json();
+        
+        if (participants.length === 0) {
+            pendingList.innerHTML = '<p class="no-pending">No pending verifications</p>';
+            return;
+        }
+        
+        pendingList.innerHTML = participants.map(p => `
+            <div class="pending-item">
+                <div class="pending-info">
+                    <div class="pending-name">${p.name}</div>
+                    <div class="pending-phone">📱 ${p.phone}</div>
+                    <div class="pending-wager">💵 $${p.wager}</div>
+                    <div class="pending-time">${formatTime(p.created_at)}</div>
+                </div>
+                <div class="pending-actions">
+                    <button class="btn btn-success btn-sm" onclick="verifyParticipant(${p.id})">
+                        ✓ Verify Payment
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectParticipant(${p.id})">
+                        ✗ Reject
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading pending participants:', error);
+    }
+}
+
+// Load all participants (for verified list)
+async function loadAllParticipants() {
+    try {
+        const response = await fetch('/api/admin/participants');
+        const participants = await response.json();
+        
+        const verified = participants.filter(p => p.verified && p.in_current_raffle);
+        
+        if (verified.length === 0) {
+            verifiedList.innerHTML = '<p class="no-verified">No verified participants yet</p>';
+            return;
+        }
+        
+        verifiedList.innerHTML = verified.map(p => `
+            <div class="verified-item">
+                <span class="verified-name">${p.name}</span>
+                <span class="verified-phone">${p.phone}</span>
+                <span class="verified-wager">$${p.wager}</span>
+                <span class="verified-entries">${p.wager / 10} entries</span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading participants:', error);
+    }
+}
+
+// Verify participant
+async function verifyParticipant(id) {
+    try {
+        const response = await fetch(`/api/admin/participants/${id}/verify`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(data.message);
+            loadPendingParticipants();
+            loadAllParticipants();
+            loadRaffleStatus();
+        } else {
+            alert(data.error || 'Error verifying participant');
+        }
+    } catch (error) {
+        console.error('Error verifying participant:', error);
+        alert('Error verifying participant');
+    }
+}
+
+// Reject participant
+async function rejectParticipant(id) {
+    if (!confirm('Are you sure you want to reject this entry?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/participants/${id}/reject`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            loadPendingParticipants();
+        } else {
+            alert('Error rejecting participant');
+        }
+    } catch (error) {
+        console.error('Error rejecting participant:', error);
+        alert('Error rejecting participant');
+    }
+}
+
+// Trigger draw
 async function triggerDraw() {
     if (!confirm('Are you sure you want to trigger a draw now?')) {
         return;
@@ -128,12 +226,14 @@ async function triggerDraw() {
         if (response.ok) {
             if (data.winners && data.winners.length > 0) {
                 alert(`Draw complete!\n\nWinners:\n${data.winners.map(w => 
-                    `${w.position}. ${w.token_id}: +${w.amount} tokens`
+                    `${w.position}. ${w.name}: +$${w.amount}`
                 ).join('\n')}`);
             } else {
                 alert('Draw complete! No participants in this raffle.');
             }
             loadRaffleStatus();
+            loadPendingParticipants();
+            loadAllParticipants();
         } else {
             alert(data.error || 'Error triggering draw');
         }
@@ -148,11 +248,11 @@ async function triggerDraw() {
 
 // Reset system
 async function resetSystem() {
-    if (!confirm('WARNING: This will delete ALL tokens, entries, and raffle history.\n\nAre you absolutely sure?')) {
+    if (!confirm('WARNING: This will delete ALL participants and raffle history.\n\nAre you absolutely sure?')) {
         return;
     }
     
-    if (!confirm('This action cannot be undone. Type "RESET" mentally and click OK to confirm.')) {
+    if (!confirm('This cannot be undone. Click OK to confirm.')) {
         return;
     }
     
@@ -164,10 +264,10 @@ async function resetSystem() {
         });
         
         if (response.ok) {
-            alert('System has been reset successfully.');
+            alert('System has been reset.');
             loadRaffleStatus();
-            loadTokens();
-            generatedTokensSection.classList.add('hidden');
+            loadPendingParticipants();
+            loadAllParticipants();
         } else {
             alert('Error resetting system');
         }
@@ -179,145 +279,12 @@ async function resetSystem() {
     }
 }
 
-// Generate tokens
-async function generateTokens() {
-    const count = parseInt(tokenCountInput.value) || 10;
-    const balance = parseInt(tokenBalanceInput.value) || 100;
-    
-    try {
-        generateTokensBtn.disabled = true;
-        generateTokensBtn.textContent = 'Generating...';
-        
-        const response = await fetch('/api/admin/tokens/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ count, balance })
-        });
-        
-        generatedTokensList = await response.json();
-        
-        // Display generated tokens
-        tokenCards.innerHTML = generatedTokensList.map(token => `
-            <div class="token-card">
-                <div class="token-card-title">BestwAI Raffle Token</div>
-                <div class="token-card-id">${token.token_id}</div>
-                <div class="token-card-qr">
-                    <img src="data:image/png;base64,${token.qr_code}" alt="QR Code">
-                </div>
-                <div class="token-card-balance">Starting Balance: <span>${token.balance}</span> tokens</div>
-            </div>
-        `).join('');
-        
-        generatedTokensSection.classList.remove('hidden');
-        loadTokens();
-        
-    } catch (error) {
-        console.error('Error generating tokens:', error);
-        alert('Error generating tokens');
-    } finally {
-        generateTokensBtn.disabled = false;
-        generateTokensBtn.textContent = 'Generate Tokens';
-    }
-}
-
-// Load all tokens
-async function loadTokens() {
-    try {
-        const response = await fetch('/api/admin/tokens');
-        const tokens = await response.json();
-        
-        if (tokens.length === 0) {
-            tokensTableBody.innerHTML = '<tr><td colspan="4">No tokens generated yet</td></tr>';
-            return;
-        }
-        
-        tokensTableBody.innerHTML = tokens.map(token => `
-            <tr>
-                <td class="token-id">${token.token_id}</td>
-                <td class="balance">${token.balance}</td>
-                <td>${formatDate(token.created_at)}</td>
-                <td class="actions">
-                    <button class="btn btn-secondary btn-sm" onclick="editBalance('${token.token_id}', ${token.balance})">
-                        Edit
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading tokens:', error);
-        tokensTableBody.innerHTML = '<tr><td colspan="4">Error loading tokens</td></tr>';
-    }
-}
-
-// Edit token balance
-async function editBalance(tokenId, currentBalance) {
-    const newBalance = prompt(`Enter new balance for ${tokenId}:`, currentBalance);
-    
-    if (newBalance === null) return;
-    
-    const balance = parseInt(newBalance);
-    if (isNaN(balance) || balance < 0) {
-        alert('Please enter a valid positive number');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/admin/tokens/${tokenId}/balance`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ balance })
-        });
-        
-        if (response.ok) {
-            loadTokens();
-        } else {
-            alert('Error updating balance');
-        }
-    } catch (error) {
-        console.error('Error updating balance:', error);
-        alert('Error updating balance');
-    }
-}
-
-// Print tokens
-function printTokens() {
-    if (generatedTokensList.length === 0) {
-        alert('No tokens to print. Generate tokens first.');
-        return;
-    }
-    
-    printContent.innerHTML = `
-        <style>
-            .print-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; }
-            .print-card { border: 2px solid #000; padding: 20px; text-align: center; page-break-inside: avoid; }
-            .print-title { font-size: 14px; color: #666; margin-bottom: 10px; }
-            .print-id { font-size: 24px; font-family: monospace; font-weight: bold; margin-bottom: 15px; }
-            .print-qr img { max-width: 150px; }
-            .print-balance { font-size: 12px; color: #666; margin-top: 10px; }
-            @media print { body { -webkit-print-color-adjust: exact; } }
-        </style>
-        <div class="print-grid">
-            ${generatedTokensList.map(token => `
-                <div class="print-card">
-                    <div class="print-title">BestwAI Raffle Token</div>
-                    <div class="print-id">${token.token_id}</div>
-                    <div class="print-qr">
-                        <img src="data:image/png;base64,${token.qr_code}" alt="QR">
-                    </div>
-                    <div class="print-balance">Starting Balance: ${token.balance} tokens</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-    
-    window.print();
-}
-
-// Helper: Format date
-function formatDate(isoString) {
+// Helpers
+function formatTime(isoString) {
     const date = new Date(isoString);
     return date.toLocaleString();
 }
 
-// Make editBalance available globally
-window.editBalance = editBalance;
+// Make functions globally available
+window.verifyParticipant = verifyParticipant;
+window.rejectParticipant = rejectParticipant;

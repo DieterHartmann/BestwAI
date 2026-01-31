@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BestwAI Raffle - Success</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="user-page">
+    <div class="container">
+        <header>
+            <h1>🎰 BestwAI Raffle</h1>
+        </header>
+
+        <section class="success-section">
+            <div class="card success-card">
+                <div class="success-icon">✅</div>
+                <h2>Registration Received!</h2>
+                <p>Your entry has been submitted. Please pay the admin to verify your entry.</p>
+                <div class="next-steps">
+                    <h3>Next Steps:</h3>
+                    <ol>
+                        <li>Pay the raffle admin</li>
+                        <li>Your entry will be verified</li>
+                        <li>Watch the display screen for the draw!</li>
+                    </ol>
+                </div>
+                <a href="/" class="btn btn-primary">Register Another Entry</a>
+            </div>
+        </section>
+
+        <footer>
+            <a href="/display" class="link">View Live Display</a>
+        </footer>
+    </div>
+</body>
+</html>

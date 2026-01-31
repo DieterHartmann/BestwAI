@@ -1,6 +1,7 @@
 """
 BestwAI Raffle Platform
 A web-based raffle system for live AI exhibit demos.
+Users sign up with name, phone, and wager amount. Admin verifies payments.
 """
 
 import os
@@ -50,15 +51,17 @@ def set_config(key, value):
 # =============================================================================
 # Database Models
 # =============================================================================
-class Token(db.Model):
-    """Represents a user's token with balance."""
+class Participant(db.Model):
+    """A user who has signed up for the raffle."""
     id = db.Column(db.Integer, primary_key=True)
-    token_id = db.Column(db.String(20), unique=True, nullable=False, index=True)
-    balance = db.Column(db.Integer, default=100, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    wager_amount = db.Column(db.Integer, nullable=False)  # Must be multiple of 10
+    verified = db.Column(db.Boolean, default=False)  # Admin verifies payment
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    entries = db.relationship('Entry', backref='token', lazy='dynamic')
-    wins = db.relationship('Winner', backref='token', lazy='dynamic')
+    entries = db.relationship('Entry', backref='participant', lazy='dynamic')
+    wins = db.relationship('Winner', backref='participant', lazy='dynamic')
 
 class Raffle(db.Model):
     """Represents a raffle draw."""
@@ -75,15 +78,15 @@ class Entry(db.Model):
     """Represents entries into a raffle."""
     id = db.Column(db.Integer, primary_key=True)
     raffle_id = db.Column(db.Integer, db.ForeignKey('raffle.id'), nullable=False)
-    token_id = db.Column(db.Integer, db.ForeignKey('token.id'), nullable=False)
-    entry_count = db.Column(db.Integer, default=1)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+    entry_count = db.Column(db.Integer, default=1)  # Based on wager amount
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Winner(db.Model):
     """Represents raffle winners."""
     id = db.Column(db.Integer, primary_key=True)
     raffle_id = db.Column(db.Integer, db.ForeignKey('raffle.id'), nullable=False)
-    token_id = db.Column(db.Integer, db.ForeignKey('token.id'), nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
     amount_won = db.Column(db.Integer, nullable=False)
     position = db.Column(db.Integer, nullable=False)  # 1st, 2nd, 3rd, etc.
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -91,14 +94,6 @@ class Winner(db.Model):
 # =============================================================================
 # Helper Functions
 # =============================================================================
-def generate_token_id():
-    """Generate a unique token ID like TKN-A1B2C3."""
-    chars = string.ascii_uppercase + string.digits
-    while True:
-        token_id = 'TKN-' + ''.join(random.choices(chars, k=6))
-        if not Token.query.filter_by(token_id=token_id).first():
-            return token_id
-
 def generate_qr_code(data):
     """Generate a QR code as base64 string."""
     qr = qrcode.QRCode(version=1, box_size=10, border=2)
@@ -121,6 +116,32 @@ def get_current_raffle():
         db.session.commit()
     return raffle
 
+def add_verified_participant_to_raffle(participant):
+    """Add a verified participant to the current raffle."""
+    raffle = get_current_raffle()
+    
+    # Check if already entered
+    existing = Entry.query.filter_by(raffle_id=raffle.id, participant_id=participant.id).first()
+    if existing:
+        return False
+    
+    # Calculate entries (1 entry per 10 wagered)
+    entry_count = participant.wager_amount // 10
+    
+    # Create entry
+    entry = Entry(
+        raffle_id=raffle.id,
+        participant_id=participant.id,
+        entry_count=entry_count
+    )
+    db.session.add(entry)
+    
+    # Update pot
+    raffle.total_pot += participant.wager_amount
+    db.session.commit()
+    
+    return True
+
 def execute_raffle_draw(raffle_id=None):
     """Execute the raffle draw and select winners."""
     with app.app_context():
@@ -142,22 +163,23 @@ def execute_raffle_draw(raffle_id=None):
         if not entries:
             raffle.status = 'completed'
             db.session.commit()
-            # Create next raffle
             get_current_raffle()
             return {'winners': [], 'pot': 0, 'raffle_id': raffle.id}
         
-        # Build weighted list of token IDs
+        # Build weighted list of participant IDs
         weighted_entries = []
         for entry in entries:
-            weighted_entries.extend([entry.token_id] * entry.entry_count)
+            weighted_entries.extend([entry.participant_id] * entry.entry_count)
         
         # Calculate payouts
         total_pot = raffle.total_pot
         house_cut = int(total_pot * 0.10)  # 10% house edge
         prize_pool = total_pot - house_cut
         
-        # Winner distribution (5 winners)
-        winner_count = min(5, len(set(weighted_entries)))
+        # Winner distribution (5 winners max)
+        unique_participants = list(set(weighted_entries))
+        winner_count = min(5, len(unique_participants))
+        
         if winner_count == 0:
             raffle.status = 'completed'
             db.session.commit()
@@ -166,13 +188,12 @@ def execute_raffle_draw(raffle_id=None):
         
         # Distribution percentages for 5 winners: 40%, 25%, 18%, 10%, 7%
         distributions = [0.40, 0.25, 0.18, 0.10, 0.07][:winner_count]
-        # Normalize if fewer winners
         total_dist = sum(distributions)
         distributions = [d / total_dist for d in distributions]
         
-        # Select winners (weighted random, no duplicates for positions)
+        # Select winners (weighted random, no duplicates)
         winners_data = []
-        selected_token_ids = set()
+        selected_ids = set()
         remaining_entries = weighted_entries.copy()
         
         for position, dist in enumerate(distributions, 1):
@@ -180,41 +201,45 @@ def execute_raffle_draw(raffle_id=None):
                 break
             
             # Select winner
-            winner_token_db_id = random.choice(remaining_entries)
-            token = Token.query.get(winner_token_db_id)
+            winner_id = random.choice(remaining_entries)
             
-            if token.id in selected_token_ids:
-                # Remove this token from remaining and try again
-                remaining_entries = [e for e in remaining_entries if e != winner_token_db_id]
-                if remaining_entries:
-                    winner_token_db_id = random.choice(remaining_entries)
-                    token = Token.query.get(winner_token_db_id)
-                else:
+            # Avoid duplicates
+            attempts = 0
+            while winner_id in selected_ids and attempts < 100:
+                remaining_entries = [e for e in remaining_entries if e != winner_id]
+                if not remaining_entries:
                     break
+                winner_id = random.choice(remaining_entries)
+                attempts += 1
             
-            selected_token_ids.add(token.id)
+            if winner_id in selected_ids:
+                continue
+                
+            participant = Participant.query.get(winner_id)
+            if not participant:
+                continue
+            
+            selected_ids.add(winner_id)
             amount = int(prize_pool * dist)
             
             # Create winner record
             winner = Winner(
                 raffle_id=raffle.id,
-                token_id=token.id,
+                participant_id=participant.id,
                 amount_won=amount,
                 position=position
             )
             db.session.add(winner)
             
-            # Credit winner's balance
-            token.balance += amount
-            
             winners_data.append({
-                'token_id': token.token_id,
+                'name': participant.name,
+                'phone_last4': participant.phone[-4:] if len(participant.phone) >= 4 else participant.phone,
                 'amount': amount,
                 'position': position
             })
             
-            # Remove this token from remaining entries for next selection
-            remaining_entries = [e for e in remaining_entries if e != winner_token_db_id]
+            # Remove this participant from remaining
+            remaining_entries = [e for e in remaining_entries if e != winner_id]
         
         # Complete the raffle
         raffle.status = 'completed'
@@ -235,40 +260,73 @@ def execute_raffle_draw(raffle_id=None):
 # =============================================================================
 @app.route('/')
 def index():
-    """Main user entry page."""
-    token_id = request.args.get('token', '')
-    return render_template('index.html', token_id=token_id)
+    """Signup page for users."""
+    return render_template('index.html')
 
 @app.route('/display')
 def display():
-    """Public display screen for live viewing."""
-    return render_template('display.html')
+    """Public display screen with QR code for signup."""
+    # Generate QR code for signup URL
+    base_url = request.url_root.rstrip('/')
+    signup_url = base_url + '/'
+    qr_code = generate_qr_code(signup_url)
+    return render_template('display.html', qr_code=qr_code, signup_url=signup_url)
 
 @app.route('/admin')
 def admin():
-    """Admin panel."""
+    """Admin panel for verification and management."""
     return render_template('admin.html')
+
+@app.route('/success')
+def success():
+    """Success page after signup."""
+    return render_template('success.html')
 
 # =============================================================================
 # API Routes
 # =============================================================================
-@app.route('/api/token/<token_id>')
-def get_token_info(token_id):
-    """Get token balance and info."""
-    token = Token.query.filter_by(token_id=token_id.upper()).first()
-    if not token:
-        return jsonify({'error': 'Token not found'}), 404
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    """Register a new participant."""
+    data = request.json
+    name = data.get('name', '').strip()
+    phone = data.get('phone', '').strip()
+    wager = data.get('wager', 0)
     
-    # Get entry count for current raffle
+    # Validation
+    if not name:
+        return jsonify({'error': 'Name is required'}), 400
+    if not phone:
+        return jsonify({'error': 'Phone number is required'}), 400
+    if not wager or wager < 10:
+        return jsonify({'error': 'Minimum wager is 10'}), 400
+    if wager % 10 != 0:
+        return jsonify({'error': 'Wager must be in multiples of 10'}), 400
+    
+    # Check for duplicate phone in current raffle
     raffle = get_current_raffle()
-    entry = Entry.query.filter_by(raffle_id=raffle.id, token_id=token.id).first()
+    existing = Participant.query.join(Entry).filter(
+        Entry.raffle_id == raffle.id,
+        Participant.phone == phone
+    ).first()
+    
+    if existing:
+        return jsonify({'error': 'This phone number is already registered for the current raffle'}), 400
+    
+    # Create participant (unverified)
+    participant = Participant(
+        name=name,
+        phone=phone,
+        wager_amount=wager,
+        verified=False
+    )
+    db.session.add(participant)
+    db.session.commit()
     
     return jsonify({
-        'token_id': token.token_id,
-        'balance': token.balance,
-        'current_entries': entry.entry_count if entry else 0,
-        'total_wins': token.wins.count(),
-        'total_winnings': sum(w.amount_won for w in token.wins)
+        'success': True,
+        'participant_id': participant.id,
+        'message': f'Registration received! Your entry will be active once payment of {wager} is verified.'
     })
 
 @app.route('/api/raffle/current')
@@ -276,20 +334,24 @@ def get_current_raffle_info():
     """Get current raffle status."""
     raffle = get_current_raffle()
     
-    # Get participant info
+    # Get verified participants only
     entries = Entry.query.filter_by(raffle_id=raffle.id).all()
     participants = []
     total_entries = 0
     
     for entry in entries:
-        token = Token.query.get(entry.token_id)
-        participants.append({
-            'token_id': token.token_id,
-            'entries': entry.entry_count
-        })
-        total_entries += entry.entry_count
-    
-    entry_cost = int(get_config('entry_cost', 10))
+        participant = Participant.query.get(entry.participant_id)
+        if participant and participant.verified:
+            # Show partial name for privacy
+            display_name = participant.name.split()[0] if participant.name else 'Anonymous'
+            if len(display_name) > 8:
+                display_name = display_name[:8] + '...'
+            participants.append({
+                'name': display_name,
+                'entries': entry.entry_count,
+                'wager': participant.wager_amount
+            })
+            total_entries += entry.entry_count
     
     return jsonify({
         'raffle_id': raffle.id,
@@ -299,52 +361,7 @@ def get_current_raffle_info():
         'participant_count': len(participants),
         'total_entries': total_entries,
         'participants': participants,
-        'entry_cost': entry_cost,
         'server_time': datetime.utcnow().isoformat()
-    })
-
-@app.route('/api/raffle/enter', methods=['POST'])
-def enter_raffle():
-    """Enter current raffle with tokens."""
-    data = request.json
-    token_id = data.get('token_id', '').upper()
-    entries = data.get('entries', 1)
-    
-    token = Token.query.filter_by(token_id=token_id).first()
-    if not token:
-        return jsonify({'error': 'Token not found'}), 404
-    
-    entry_cost = int(get_config('entry_cost', 10))
-    total_cost = entry_cost * entries
-    
-    if token.balance < total_cost:
-        return jsonify({'error': 'Insufficient balance'}), 400
-    
-    raffle = get_current_raffle()
-    if raffle.status != 'pending':
-        return jsonify({'error': 'Raffle not accepting entries'}), 400
-    
-    # Deduct tokens
-    token.balance -= total_cost
-    
-    # Add to pot
-    raffle.total_pot += total_cost
-    
-    # Create or update entry
-    entry = Entry.query.filter_by(raffle_id=raffle.id, token_id=token.id).first()
-    if entry:
-        entry.entry_count += entries
-    else:
-        entry = Entry(raffle_id=raffle.id, token_id=token.id, entry_count=entries)
-        db.session.add(entry)
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'new_balance': token.balance,
-        'total_entries': entry.entry_count,
-        'pot_size': raffle.total_pot
     })
 
 @app.route('/api/raffle/draw', methods=['POST'])
@@ -369,7 +386,7 @@ def get_raffle_history():
             'draw_time': raffle.draw_time.isoformat(),
             'total_pot': raffle.total_pot,
             'winners': [{
-                'token_id': Token.query.get(w.token_id).token_id,
+                'name': Participant.query.get(w.participant_id).name.split()[0] if Participant.query.get(w.participant_id) else 'Unknown',
                 'amount': w.amount_won,
                 'position': w.position
             } for w in winners]
@@ -390,7 +407,7 @@ def get_latest_winners():
         'draw_time': raffle.draw_time.isoformat(),
         'total_pot': raffle.total_pot,
         'winners': [{
-            'token_id': Token.query.get(w.token_id).token_id,
+            'name': Participant.query.get(w.participant_id).name if Participant.query.get(w.participant_id) else 'Unknown',
             'amount': w.amount_won,
             'position': w.position
         } for w in winners]
@@ -399,68 +416,89 @@ def get_latest_winners():
 # =============================================================================
 # Admin API Routes
 # =============================================================================
-@app.route('/api/admin/tokens', methods=['GET'])
-def list_tokens():
-    """List all tokens."""
-    tokens = Token.query.order_by(Token.created_at.desc()).all()
-    return jsonify([{
-        'token_id': t.token_id,
-        'balance': t.balance,
-        'created_at': t.created_at.isoformat()
-    } for t in tokens])
-
-@app.route('/api/admin/tokens/generate', methods=['POST'])
-def generate_tokens():
-    """Generate new tokens."""
-    data = request.json
-    count = data.get('count', 1)
-    starting_balance = data.get('balance', 100)
+@app.route('/api/admin/participants')
+def list_participants():
+    """List all participants (pending and verified)."""
+    raffle = get_current_raffle()
     
-    base_url = request.url_root
-    new_tokens = []
+    # Get participants for current raffle
+    participants = Participant.query.order_by(Participant.created_at.desc()).all()
     
-    for _ in range(count):
-        token_id = generate_token_id()
-        token = Token(token_id=token_id, balance=starting_balance)
-        db.session.add(token)
-        
-        # Generate QR code
-        url = f"{base_url}?token={token_id}"
-        qr_code = generate_qr_code(url)
-        
-        new_tokens.append({
-            'token_id': token_id,
-            'balance': starting_balance,
-            'url': url,
-            'qr_code': qr_code
+    result = []
+    for p in participants:
+        # Check if in current raffle
+        entry = Entry.query.filter_by(raffle_id=raffle.id, participant_id=p.id).first()
+        result.append({
+            'id': p.id,
+            'name': p.name,
+            'phone': p.phone,
+            'wager': p.wager_amount,
+            'verified': p.verified,
+            'in_current_raffle': entry is not None,
+            'created_at': p.created_at.isoformat()
         })
     
-    db.session.commit()
-    return jsonify(new_tokens)
+    return jsonify(result)
 
-@app.route('/api/admin/tokens/<token_id>/balance', methods=['POST'])
-def update_token_balance(token_id):
-    """Update a token's balance."""
-    data = request.json
-    new_balance = data.get('balance')
+@app.route('/api/admin/participants/pending')
+def list_pending_participants():
+    """List unverified participants."""
+    participants = Participant.query.filter_by(verified=False).order_by(Participant.created_at.desc()).all()
     
-    token = Token.query.filter_by(token_id=token_id.upper()).first()
-    if not token:
-        return jsonify({'error': 'Token not found'}), 404
+    return jsonify([{
+        'id': p.id,
+        'name': p.name,
+        'phone': p.phone,
+        'wager': p.wager_amount,
+        'created_at': p.created_at.isoformat()
+    } for p in participants])
+
+@app.route('/api/admin/participants/<int:participant_id>/verify', methods=['POST'])
+def verify_participant(participant_id):
+    """Verify a participant's payment and add them to raffle."""
+    participant = Participant.query.get(participant_id)
+    if not participant:
+        return jsonify({'error': 'Participant not found'}), 404
     
-    token.balance = new_balance
+    if participant.verified:
+        return jsonify({'error': 'Already verified'}), 400
+    
+    # Mark as verified
+    participant.verified = True
     db.session.commit()
     
-    return jsonify({'token_id': token.token_id, 'balance': token.balance})
+    # Add to current raffle
+    added = add_verified_participant_to_raffle(participant)
+    
+    return jsonify({
+        'success': True,
+        'message': f'{participant.name} verified and added to raffle!',
+        'added_to_raffle': added
+    })
+
+@app.route('/api/admin/participants/<int:participant_id>/reject', methods=['POST'])
+def reject_participant(participant_id):
+    """Reject/delete a participant."""
+    participant = Participant.query.get(participant_id)
+    if not participant:
+        return jsonify({'error': 'Participant not found'}), 404
+    
+    # Remove any entries
+    Entry.query.filter_by(participant_id=participant_id).delete()
+    
+    # Delete participant
+    db.session.delete(participant)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Participant removed'})
 
 @app.route('/api/admin/config', methods=['GET'])
 def get_all_config():
     """Get all configuration."""
     return jsonify({
-        'entry_cost': int(get_config('entry_cost', 10)),
         'draw_interval': int(get_config('draw_interval', 60)),
-        'starting_balance': int(get_config('starting_balance', 100)),
-        'winner_count': int(get_config('winner_count', 5))
+        'min_wager': int(get_config('min_wager', 10)),
+        'max_wager': int(get_config('max_wager', 1000))
     })
 
 @app.route('/api/admin/config', methods=['POST'])
@@ -474,14 +512,12 @@ def update_config():
 @app.route('/api/admin/reset', methods=['POST'])
 def reset_system():
     """Reset the entire system."""
-    # Clear all tables
     Winner.query.delete()
     Entry.query.delete()
     Raffle.query.delete()
-    Token.query.delete()
+    Participant.query.delete()
     db.session.commit()
     
-    # Create new raffle
     get_current_raffle()
     
     return jsonify({'success': True, 'message': 'System reset complete'})
@@ -506,17 +542,14 @@ def init_db():
     with app.app_context():
         db.create_all()
         
-        # Set default configuration if not exists
-        if not get_config('entry_cost'):
-            set_config('entry_cost', 10)
+        # Set default configuration
         if not get_config('draw_interval'):
             set_config('draw_interval', 60)
-        if not get_config('starting_balance'):
-            set_config('starting_balance', 100)
-        if not get_config('winner_count'):
-            set_config('winner_count', 5)
+        if not get_config('min_wager'):
+            set_config('min_wager', 10)
+        if not get_config('max_wager'):
+            set_config('max_wager', 1000)
         
-        # Ensure there's a current raffle
         get_current_raffle()
 
 # Initialize on startup

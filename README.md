@@ -1,25 +1,35 @@
 # BestwAI Raffle Platform
 
-A web-based raffle system for live AI exhibit demos. Attendees use tokens to enter hourly drawings, with winners selected via weighted random selection.
+A web-based raffle system for live AI exhibit demos. Users sign up with their name and phone, place wagers, and admin verifies payments before entries become active.
 
 ## Features
 
-- **Token System**: Unique alphanumeric token IDs with balances
+- **User Signup**: Name, phone, wager amount (multiples of $10)
+- **Payment Verification**: Admin manually verifies payments before entry is active
+- **QR Code on Display**: Big screen shows QR code for easy signup
 - **Automated Hourly Draws**: Configurable raffle intervals
-- **Weighted Random Selection**: More entries = higher chance to win
+- **Weighted Random Selection**: More entries (higher wager) = higher chance to win
 - **5 Winners per Draw**: 40%, 25%, 18%, 10%, 7% distribution
 - **10% House Edge**: Platform retains 10% of each pot
-- **QR Code Support**: Generate printable token cards
-- **Real-time Updates**: Live countdown and participant tracking
-- **Draw Animation**: Visual celebration when winners are announced
 
 ## Pages
 
 | Route | Description |
 |-------|-------------|
-| `/` | User entry page - check balance, enter raffles |
-| `/display` | Public display screen - countdown, pot, winner animations |
-| `/admin` | Admin panel - generate tokens, configure settings, trigger draws |
+| `/` | User signup page - enter name, phone, wager amount |
+| `/display` | Public display screen - QR code, countdown, winner animations |
+| `/admin` | Admin panel - verify payments, trigger draws, manage system |
+
+## Flow
+
+1. **Display Screen** (`/display`) shows QR code on big screen
+2. **User Scans QR** → lands on signup page (`/`)
+3. **User Submits** name, phone, and wager amount
+4. **Admin Receives** notification of pending entry
+5. **User Pays** admin (cash, Venmo, etc.)
+6. **Admin Verifies** payment in admin panel → entry becomes active
+7. **Draw Happens** automatically or manually triggered
+8. **Winners Announced** with celebration animation
 
 ## Quick Start
 
@@ -44,48 +54,45 @@ Visit `http://localhost:8080` in your browser.
 1. Push this repo to GitHub
 2. Connect to Railway
 3. Railway will auto-detect and deploy
-
-The app uses SQLite which works with Railway's ephemeral filesystem for demos.
-
-## Configuration
-
-Default settings (configurable via admin panel):
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Entry Cost | 10 tokens | Cost per raffle entry |
-| Draw Interval | 60 minutes | Time between automated draws |
-| Starting Balance | 100 tokens | New token default balance |
-| Winner Count | 5 | Number of winners per draw |
+4. Share the `/display` URL on a big screen
+5. Users scan QR code to join
 
 ## API Endpoints
 
 ### Public API
 
-- `GET /api/token/<token_id>` - Get token balance and stats
+- `POST /api/signup` - Register for raffle (name, phone, wager)
 - `GET /api/raffle/current` - Current raffle status
-- `POST /api/raffle/enter` - Enter current raffle
 - `GET /api/raffle/history` - Recent draw history
 
 ### Admin API
 
-- `GET /api/admin/tokens` - List all tokens
-- `POST /api/admin/tokens/generate` - Generate new tokens
-- `POST /api/admin/tokens/<id>/balance` - Update token balance
-- `GET /api/admin/config` - Get configuration
-- `POST /api/admin/config` - Update configuration
+- `GET /api/admin/participants` - List all participants
+- `GET /api/admin/participants/pending` - List unverified entries
+- `POST /api/admin/participants/<id>/verify` - Verify payment & add to raffle
+- `POST /api/admin/participants/<id>/reject` - Reject entry
 - `POST /api/raffle/draw` - Manually trigger draw
 - `POST /api/admin/reset` - Reset entire system
 
-## Demo Flow
+## Configuration
 
-1. **Setup**: Admin generates tokens via `/admin`
-2. **Distribution**: Print token cards with QR codes
-3. **Entry**: Attendees scan QR → land on entry page
-4. **Participation**: Users enter raffle with their tokens
-5. **Display**: Show `/display` on big screen for countdown
-6. **Draw**: Winners announced with animation
-7. **Repeat**: Next raffle starts automatically
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Draw Interval | 60 min | Time between automated draws |
+| Min Wager | $10 | Minimum entry amount |
+| Max Wager | $1000 | Maximum entry amount |
+
+## Prize Distribution
+
+From 90% of total pot (10% house edge):
+
+| Place | Share |
+|-------|-------|
+| 🥇 1st | 40% |
+| 🥈 2nd | 25% |
+| 🥉 3rd | 18% |
+| 4th | 10% |
+| 5th | 7% |
 
 ## Tech Stack
 
@@ -94,7 +101,7 @@ Default settings (configurable via admin panel):
 - **Scheduler**: APScheduler
 - **Frontend**: Vanilla JS + CSS
 - **QR Codes**: qrcode + Pillow
-- **Production**: Gunicorn
+- **Production**: Gunicorn + Railway
 
 ## Environment Variables
 
