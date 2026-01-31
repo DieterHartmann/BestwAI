@@ -8,6 +8,7 @@ const resetSystemBtn = document.getElementById('resetSystemBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 
+const configAdminPin = document.getElementById('configAdminPin');
 const configDrawInterval = document.getElementById('configDrawInterval');
 const configMinWager = document.getElementById('configMinWager');
 const configMaxWager = document.getElementById('configMaxWager');
@@ -47,6 +48,7 @@ async function loadConfig() {
         const response = await fetch('/api/admin/config');
         const config = await response.json();
         
+        configAdminPin.value = config.admin_pin || '1234';
         configDrawInterval.value = config.draw_interval;
         configMinWager.value = config.min_wager;
         configMaxWager.value = config.max_wager;
@@ -65,6 +67,7 @@ async function saveConfig() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                admin_pin: configAdminPin.value,
                 draw_interval: parseInt(configDrawInterval.value),
                 min_wager: parseInt(configMinWager.value),
                 max_wager: parseInt(configMaxWager.value)
@@ -72,7 +75,7 @@ async function saveConfig() {
         });
         
         if (response.ok) {
-            alert('Configuration saved!');
+            alert('Configuration saved! PIN: ' + configAdminPin.value);
         } else {
             alert('Error saving configuration');
         }

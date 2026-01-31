@@ -287,11 +287,12 @@ def success():
 # =============================================================================
 @app.route('/api/signup', methods=['POST'])
 def signup():
-    """Register a new participant."""
+    """Register a new participant with PIN verification."""
     data = request.json
     name = data.get('name', '').strip()
     phone = data.get('phone', '').strip()
     wager = data.get('wager', 0)
+    pin = data.get('pin', '').strip()
     
     # Validation
     if not name:
@@ -299,9 +300,14 @@ def signup():
     if not phone:
         return jsonify({'error': 'Phone number is required'}), 400
     if not wager or wager < 10:
-        return jsonify({'error': 'Minimum wager is 10'}), 400
+        return jsonify({'error': 'Minimum wager is $10'}), 400
     if wager % 10 != 0:
-        return jsonify({'error': 'Wager must be in multiples of 10'}), 400
+        return jsonify({'error': 'Wager must be in multiples of $10'}), 400
+    
+    # PIN validation - admin must enter their PIN
+    admin_pin = get_config('admin_pin', '1234')  # Default PIN is 1234
+    if pin != admin_pin:
+        return jsonify({'error': 'Invalid PIN. Ask admin to enter the PIN.'}), 403
     
     # Check for duplicate phone in current raffle
     raffle = get_current_raffle()
@@ -313,20 +319,23 @@ def signup():
     if existing:
         return jsonify({'error': 'This phone number is already registered for the current raffle'}), 400
     
-    # Create participant (unverified)
+    # Create participant (auto-verified since PIN was correct)
     participant = Participant(
         name=name,
         phone=phone,
         wager_amount=wager,
-        verified=False
+        verified=True  # Auto-verify on correct PIN
     )
     db.session.add(participant)
     db.session.commit()
     
+    # Add directly to raffle since verified
+    add_verified_participant_to_raffle(participant)
+    
     return jsonify({
         'success': True,
         'participant_id': participant.id,
-        'message': f'Registration received! Your entry will be active once payment of {wager} is verified.'
+        'message': f'Welcome {name}! Your ${wager} entry is confirmed with {wager // 10} chances to win!'
     })
 
 @app.route('/api/raffle/current')
@@ -498,7 +507,8 @@ def get_all_config():
     return jsonify({
         'draw_interval': int(get_config('draw_interval', 60)),
         'min_wager': int(get_config('min_wager', 10)),
-        'max_wager': int(get_config('max_wager', 1000))
+        'max_wager': int(get_config('max_wager', 1000)),
+        'admin_pin': get_config('admin_pin', '1234')
     })
 
 @app.route('/api/admin/config', methods=['POST'])
@@ -549,6 +559,8 @@ def init_db():
             set_config('min_wager', 10)
         if not get_config('max_wager'):
             set_config('max_wager', 1000)
+        if not get_config('admin_pin'):
+            set_config('admin_pin', '1234')
         
         get_current_raffle()
 

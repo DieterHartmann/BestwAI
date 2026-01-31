@@ -10,6 +10,7 @@ let raffleData = null;
 const signupForm = document.getElementById('signupForm');
 const nameInput = document.getElementById('nameInput');
 const phoneInput = document.getElementById('phoneInput');
+const pinInput = document.getElementById('pinInput');
 const wagerValue = document.getElementById('wagerValue');
 const entryCount = document.getElementById('entryCount');
 const decreaseWager = document.getElementById('decreaseWager');
@@ -52,6 +53,7 @@ async function handleSignup(e) {
     
     const name = nameInput.value.trim();
     const phone = phoneInput.value.trim();
+    const pin = pinInput.value.trim();
     
     if (!name) {
         showFeedback('Please enter your name', 'error');
@@ -60,6 +62,11 @@ async function handleSignup(e) {
     
     if (!phone) {
         showFeedback('Please enter your phone number', 'error');
+        return;
+    }
+    
+    if (!pin) {
+        showFeedback('Admin PIN required. Hand phone to admin.', 'error');
         return;
     }
     
@@ -74,7 +81,8 @@ async function handleSignup(e) {
             body: JSON.stringify({
                 name: name,
                 phone: phone,
-                wager: wagerAmount
+                wager: wagerAmount,
+                pin: pin
             })
         });
         
