@@ -1,0 +1,263 @@
+/* =============================================================================
+   Development Story Sidebar
+   ============================================================================= */
+
+/* Sidebar Container */
+.story-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    background: #0c1222;
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem;
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.story-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.story-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.story-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+/* Vertical line */
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--success-color));
+    opacity: 0.3;
+}
+
+/* Timeline Item */
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Timeline dot */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 2px solid #0c1222;
+    z-index: 1;
+}
+
+.timeline-item:nth-child(even)::before {
+    background: var(--success-color);
+}
+
+.timeline-item:last-child::before {
+    background: var(--gold-color);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+/* Timestamp */
+.timeline-time {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-item:nth-child(even) .timeline-time {
+    color: var(--success-color);
+}
+
+.timeline-item:last-child .timeline-time {
+    color: var(--gold-color);
+}
+
+/* Title */
+.timeline-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+
+/* Description */
+.timeline-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* AI Badge */
+.ai-badge {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.ai-badge-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(34, 197, 94, 0.2));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.ai-badge-icon {
+    font-size: 1rem;
+}
+
+/* Mobile Toggle Button */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 150;
+    width: 44px;
+    height: 44px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 1.25rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background: var(--border-color);
+}
+
+/* Overlay for mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+}
+
+/* Adjust main content */
+.has-sidebar {
+    margin-left: 280px;
+}
+
+.has-sidebar .container {
+    max-width: 480px;
+}
+
+/* Display page adjustments */
+.has-sidebar.display-page .display-container {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+}
+
+/* Admin page adjustments */
+.has-sidebar.admin-page .admin-container {
+    margin-left: 280px;
+    max-width: 1200px;
+}
+
+/* =============================================================================
+   Responsive - Mobile
+   ============================================================================= */
+
+@media (max-width: 1024px) {
+    .sidebar-toggle {
+        display: flex;
+    }
+    
+    .story-sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .story-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .sidebar-overlay.open {
+        display: block;
+    }
+    
+    .has-sidebar {
+        margin-left: 0;
+    }
+    
+    .has-sidebar .container {
+        padding-top: 4rem;
+    }
+    
+    .has-sidebar.display-page .display-container {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .has-sidebar.admin-page .admin-container {
+        margin-left: 0;
+        padding-left: 1rem;
+        padding-top: 4rem;
+    }
+    
+    .has-sidebar .display-header,
+    .has-sidebar .admin-header {
+        padding-top: 3rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .story-sidebar {
+        width: 100%;
+        max-width: 320px;
+    }
+}
