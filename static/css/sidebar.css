@@ -1,5 +1,5 @@
 /* =============================================================================
-   Development Story Sidebar
+   Development Story Sidebar (LEFT)
    ============================================================================= */
 
 /* Sidebar Container */
@@ -15,6 +15,107 @@
     overflow-y: auto;
     z-index: 100;
     transition: transform 0.3s ease;
+}
+
+/* =============================================================================
+   Achievements Sidebar (RIGHT)
+   ============================================================================= */
+
+.achievements-sidebar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 220px;
+    background: #0c1222;
+    border-left: 1px solid var(--border-color);
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.achievements-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.achievements-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.achievements-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.achievements-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.achievements-header h2 {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+    text-align: center;
+}
+
+.achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.achievement-item {
+    text-align: center;
+}
+
+.achievement-check {
+    font-size: 1.5rem;
+    color: var(--success-color);
+    display: block;
+    margin-bottom: 0.25rem;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.achievement-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.2;
+    margin-bottom: 0.125rem;
+}
+
+.achievement-desc {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Colored highlights for specific achievements */
+.achievement-item:nth-child(1) .achievement-title { color: #3b82f6; } /* Railway - blue */
+.achievement-item:nth-child(2) .achievement-title { color: #22c55e; } /* Flask - green */
+.achievement-item:nth-child(3) .achievement-title { color: #fbbf24; } /* Raffle - gold */
+.achievement-item:nth-child(4) .achievement-title { color: #a855f7; } /* Token - purple */
+.achievement-item:nth-child(5) .achievement-title { color: #06b6d4; } /* Real-time - cyan */
+.achievement-item:nth-child(6) .achievement-title { color: #f472b6; } /* AI - pink */
+.achievement-item:nth-child(7) .achievement-title { 
+    color: var(--gold-color); 
+    font-size: 1.5rem;
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+}
+
+/* Adjust main content for both sidebars */
+.has-sidebars {
+    margin-left: 280px;
+    margin-right: 220px;
+}
+
+.has-sidebars .container {
+    max-width: 480px;
 }
 
 .story-sidebar::-webkit-scrollbar {
@@ -188,7 +289,7 @@
     z-index: 90;
 }
 
-/* Adjust main content */
+/* Adjust main content - single sidebar (legacy) */
 .has-sidebar {
     margin-left: 280px;
 }
@@ -197,21 +298,43 @@
     max-width: 480px;
 }
 
-/* Display page adjustments */
-.has-sidebar.display-page .display-container {
+/* Display page adjustments - both sidebars */
+.has-sidebars.display-page .display-container {
     margin-left: 280px;
-    width: calc(100% - 280px);
+    margin-right: 220px;
+    width: calc(100% - 500px);
 }
 
-/* Admin page adjustments */
-.has-sidebar.admin-page .admin-container {
+/* Admin page adjustments - both sidebars */
+.has-sidebars.admin-page .admin-container {
     margin-left: 280px;
-    max-width: 1200px;
+    margin-right: 220px;
+    max-width: 100%;
 }
 
 /* =============================================================================
-   Responsive - Mobile
+   Responsive - Tablet & Mobile
    ============================================================================= */
+
+@media (max-width: 1280px) {
+    /* Hide right sidebar on smaller screens */
+    .achievements-sidebar {
+        display: none;
+    }
+    
+    .has-sidebars {
+        margin-right: 0;
+    }
+    
+    .has-sidebars.display-page .display-container {
+        margin-right: 0;
+        width: calc(100% - 280px);
+    }
+    
+    .has-sidebars.admin-page .admin-container {
+        margin-right: 0;
+    }
+}
 
 @media (max-width: 1024px) {
     .sidebar-toggle {
@@ -230,27 +353,36 @@
         display: block;
     }
     
-    .has-sidebar {
+    .has-sidebar,
+    .has-sidebars {
         margin-left: 0;
+        margin-right: 0;
     }
     
-    .has-sidebar .container {
+    .has-sidebar .container,
+    .has-sidebars .container {
         padding-top: 4rem;
     }
     
-    .has-sidebar.display-page .display-container {
+    .has-sidebar.display-page .display-container,
+    .has-sidebars.display-page .display-container {
         margin-left: 0;
+        margin-right: 0;
         width: 100%;
     }
     
-    .has-sidebar.admin-page .admin-container {
+    .has-sidebar.admin-page .admin-container,
+    .has-sidebars.admin-page .admin-container {
         margin-left: 0;
+        margin-right: 0;
         padding-left: 1rem;
         padding-top: 4rem;
     }
     
     .has-sidebar .display-header,
-    .has-sidebar .admin-header {
+    .has-sidebar .admin-header,
+    .has-sidebars .display-header,
+    .has-sidebars .admin-header {
         padding-top: 3rem;
     }
 }

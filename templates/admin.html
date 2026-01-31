@@ -8,14 +8,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 </head>
-<body class="admin-page has-sidebar">
+<body class="admin-page has-sidebars">
     <!-- Mobile Sidebar Toggle -->
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle story sidebar">☰</button>
     
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
-    <!-- Development Story Sidebar -->
+    <!-- Development Story Sidebar (LEFT) -->
     <aside class="story-sidebar" id="storySidebar">
         <div class="sidebar-header">
             <h2>Development Timeline</h2>
@@ -24,32 +24,32 @@
         <div class="timeline">
             <div class="timeline-item">
                 <div class="timeline-time">9:30 AM</div>
-                <div class="timeline-title">Starting from Zero</div>
-                <div class="timeline-desc">Started with nothing but an idea: build a live raffle platform to demonstrate AI-assisted development at an exhibit.</div>
+                <div class="timeline-title">Brainstorming with Claude</div>
+                <div class="timeline-desc">Collaborated with Claude AI to design the raffle system: hourly draws, token mechanics, weighted random selection, 5 winners per round, 90/10 pot split.</div>
             </div>
             
             <div class="timeline-item">
-                <div class="timeline-time">9:35 AM</div>
+                <div class="timeline-time">9:45 AM</div>
                 <div class="timeline-title">Infrastructure Challenge</div>
                 <div class="timeline-desc">Needed to figure out how to host and deploy a web application. No server, no setup, just a Windows PC and determination.</div>
             </div>
             
             <div class="timeline-item">
-                <div class="timeline-time">9:45 AM</div>
+                <div class="timeline-time">9:50 AM</div>
                 <div class="timeline-title">Discovery: Railway</div>
                 <div class="timeline-desc">Found Railway as the deployment solution. Set up account, connected GitHub repo, and established the deployment pipeline.</div>
             </div>
             
             <div class="timeline-item">
                 <div class="timeline-time">10:00 AM</div>
-                <div class="timeline-title">Brainstorming with Claude</div>
-                <div class="timeline-desc">Collaborated with Claude AI to design the raffle system: hourly draws, token mechanics, weighted random selection, 5 winners per round, 90/10 pot split.</div>
+                <div class="timeline-title">Briefing Cursor</div>
+                <div class="timeline-desc">Translated the concept into detailed technical specifications and handed them to Cursor AI to build the actual application.</div>
             </div>
             
             <div class="timeline-item">
                 <div class="timeline-time">10:15 AM</div>
-                <div class="timeline-title">Briefing Cursor</div>
-                <div class="timeline-desc">Translated the concept into detailed technical specifications and handed them to Cursor AI to build the actual application.</div>
+                <div class="timeline-title">Rapid Development</div>
+                <div class="timeline-desc">Cursor generated the Flask backend, database models, API routes, and frontend templates with real-time updates.</div>
             </div>
             
             <div class="timeline-item">
@@ -63,6 +63,57 @@
             <div class="ai-badge-inner">
                 <span class="ai-badge-icon">🤖</span>
                 <span>Built with AI</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Achievements Sidebar (RIGHT) -->
+    <aside class="achievements-sidebar">
+        <div class="achievements-header">
+            <h2>Key Achievements</h2>
+        </div>
+        
+        <div class="achievements-list">
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">Railway Deploy</div>
+                <div class="achievement-desc">Zero to production</div>
+            </div>
+            
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">Flask Backend</div>
+                <div class="achievement-desc">AI-generated server</div>
+            </div>
+            
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">Live Raffle</div>
+                <div class="achievement-desc">Automated draws</div>
+            </div>
+            
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">Token System</div>
+                <div class="achievement-desc">Weighted random</div>
+            </div>
+            
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">Real-Time</div>
+                <div class="achievement-desc">Live updates</div>
+            </div>
+            
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">AI Collab</div>
+                <div class="achievement-desc">Claude + Cursor</div>
+            </div>
+            
+            <div class="achievement-item">
+                <span class="achievement-check">✓</span>
+                <div class="achievement-title">< 90 Min</div>
+                <div class="achievement-desc">Concept to deploy</div>
             </div>
         </div>
     </aside>
