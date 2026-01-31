@@ -157,14 +157,21 @@
 
         <!-- Main Display Area -->
         <main class="display-main">
-            <!-- QR Code Section - Prominent! -->
+            <!-- QR Codes Section - Prominent! -->
             <section class="qr-section">
                 <div class="qr-card">
-                    <h2>📱 SCAN TO JOIN</h2>
+                    <h2>📱 SCAN TO JOIN RAFFLE</h2>
                     <div class="qr-code">
                         <img src="data:image/png;base64,{{ qr_code }}" alt="Scan to join raffle">
                     </div>
                     <p class="qr-url">{{ signup_url }}</p>
+                </div>
+                <div class="qr-card telegram-card" id="telegramCard">
+                    <h2>💬 SEND LIVE MESSAGE</h2>
+                    <div class="qr-code" id="telegramQr">
+                        <p style="color: #888;">Loading...</p>
+                    </div>
+                    <p class="qr-url" id="telegramBotName">@bot</p>
                 </div>
             </section>
 
@@ -202,12 +209,9 @@
 
             <!-- Telegram Messages -->
             <section class="telegram-section" id="telegramSection">
-                <h2>💬 Live Messages</h2>
-                <div class="telegram-qr" id="telegramQr">
-                    <!-- QR code for Telegram bot will be loaded here -->
-                </div>
+                <h2>💬 Live Messages from Telegram</h2>
                 <div class="telegram-messages" id="telegramMessages">
-                    <p class="no-messages">Send a message via Telegram!</p>
+                    <p class="no-messages">Scan the Telegram QR code above and send a message!</p>
                 </div>
             </section>
 

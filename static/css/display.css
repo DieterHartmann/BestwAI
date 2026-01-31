@@ -52,6 +52,8 @@
 .qr-section {
     display: flex;
     justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
 }
 
 .qr-card {
@@ -60,16 +62,26 @@
     border-radius: var(--border-radius);
     text-align: center;
     box-shadow: var(--shadow-lg);
+    flex: 0 0 auto;
+}
+
+.qr-card.telegram-card {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border: 3px solid #0088cc;
+}
+
+.qr-card.telegram-card h2 {
+    color: #0088cc;
 }
 
 .qr-card h2 {
     color: #1e293b;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
 }
 
 .qr-code img {
-    max-width: 200px;
+    max-width: 180px;
     height: auto;
 }
 

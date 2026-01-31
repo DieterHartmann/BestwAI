@@ -21,6 +21,8 @@ const winnerList = document.getElementById('winnerList');
 const confettiCanvas = document.getElementById('confettiCanvas');
 const telegramMessages = document.getElementById('telegramMessages');
 const telegramQr = document.getElementById('telegramQr');
+const telegramBotName = document.getElementById('telegramBotName');
+const telegramCard = document.getElementById('telegramCard');
 
 // Confetti setup
 const ctx = confettiCanvas.getContext('2d');
@@ -341,16 +343,24 @@ async function loadTelegramBotInfo() {
         const response = await fetch('/api/telegram/bot-info');
         if (response.ok) {
             const data = await response.json();
-            if (data.qr_code && telegramQr) {
-                telegramQr.innerHTML = `
-                    <p>Scan to send messages:</p>
-                    <img src="data:image/png;base64,${data.qr_code}" alt="Telegram Bot QR" class="telegram-qr-img">
-                    <p class="telegram-link">@${data.bot_username}</p>
-                `;
+            if (data.qr_code) {
+                if (telegramQr) {
+                    telegramQr.innerHTML = `<img src="data:image/png;base64,${data.qr_code}" alt="Telegram Bot QR">`;
+                }
+                if (telegramBotName) {
+                    telegramBotName.textContent = `@${data.bot_username}`;
+                }
+                if (telegramCard) {
+                    telegramCard.style.display = 'block';
+                }
             }
+        } else {
+            // Hide telegram card if bot not configured
+            if (telegramCard) telegramCard.style.display = 'none';
         }
     } catch (error) {
-        console.log('Telegram bot not configured');
+        console.log('Telegram bot not configured:', error);
+        if (telegramCard) telegramCard.style.display = 'none';
     }
 }
 
