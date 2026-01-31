@@ -8,6 +8,7 @@ import os
 import random
 import string
 import secrets
+import requests
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +16,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import qrcode
 import io
 import base64
+
+# Telegram Bot Token
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -95,6 +99,15 @@ class Winner(db.Model):
     participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
     amount_won = db.Column(db.Integer, nullable=False)
     position = db.Column(db.Integer, nullable=False)  # 1st, 2nd, 3rd, etc.
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class TelegramMessage(db.Model):
+    """Stores messages from Telegram bot."""
+    id = db.Column(db.Integer, primary_key=True)
+    telegram_user_id = db.Column(db.BigInteger, nullable=False)
+    username = db.Column(db.String(100))
+    first_name = db.Column(db.String(100))
+    message_text = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 # =============================================================================
@@ -505,6 +518,114 @@ def get_latest_winners():
             'position': w.position
         } for w in winners]
     })
+
+# =============================================================================
+# Telegram Bot Integration
+# =============================================================================
+@app.route('/telegram/webhook', methods=['POST'])
+def telegram_webhook():
+    """Receive messages from Telegram bot."""
+    data = request.json
+    
+    if not data:
+        return jsonify({'ok': True})
+    
+    # Extract message info
+    message = data.get('message', {})
+    if not message:
+        return jsonify({'ok': True})
+    
+    text = message.get('text', '')
+    if not text:
+        return jsonify({'ok': True})
+    
+    user = message.get('from', {})
+    telegram_user_id = user.get('id')
+    username = user.get('username', '')
+    first_name = user.get('first_name', 'Anonymous')
+    
+    # Save message to database
+    msg = TelegramMessage(
+        telegram_user_id=telegram_user_id,
+        username=username,
+        first_name=first_name,
+        message_text=text[:500]  # Limit message length
+    )
+    db.session.add(msg)
+    db.session.commit()
+    
+    # Send confirmation back to user
+    if TELEGRAM_BOT_TOKEN:
+        chat_id = message.get('chat', {}).get('id')
+        send_telegram_message(chat_id, f"✅ Message received: \"{text[:50]}...\" - displayed on screen!")
+    
+    return jsonify({'ok': True})
+
+def send_telegram_message(chat_id, text):
+    """Send a message to a Telegram chat."""
+    if not TELEGRAM_BOT_TOKEN:
+        return
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    try:
+        requests.post(url, json={'chat_id': chat_id, 'text': text}, timeout=5)
+    except:
+        pass
+
+@app.route('/api/telegram/messages')
+def get_telegram_messages():
+    """Get recent Telegram messages."""
+    limit = request.args.get('limit', 10, type=int)
+    messages = TelegramMessage.query.order_by(TelegramMessage.timestamp.desc()).limit(limit).all()
+    
+    return jsonify([{
+        'id': m.id,
+        'username': m.username or m.first_name,
+        'message': m.message_text,
+        'timestamp': m.timestamp.isoformat() + 'Z'
+    } for m in messages])
+
+@app.route('/api/telegram/setup-webhook', methods=['POST'])
+def setup_telegram_webhook():
+    """Set up the Telegram webhook (call once after deploy)."""
+    if not TELEGRAM_BOT_TOKEN:
+        return jsonify({'error': 'TELEGRAM_BOT_TOKEN not set'}), 400
+    
+    # Get the public URL
+    webhook_url = request.url_root.rstrip('/') + '/telegram/webhook'
+    
+    # Set webhook with Telegram
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
+    response = requests.post(url, json={'url': webhook_url}, timeout=10)
+    
+    return jsonify({
+        'webhook_url': webhook_url,
+        'telegram_response': response.json()
+    })
+
+@app.route('/api/telegram/bot-info')
+def get_telegram_bot_info():
+    """Get bot info and QR code link."""
+    if not TELEGRAM_BOT_TOKEN:
+        return jsonify({'error': 'TELEGRAM_BOT_TOKEN not set'}), 400
+    
+    # Get bot username
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getMe"
+    try:
+        response = requests.get(url, timeout=5)
+        bot_data = response.json()
+        if bot_data.get('ok'):
+            bot_username = bot_data['result'].get('username', '')
+            bot_link = f"https://t.me/{bot_username}"
+            qr_code = generate_qr_code(bot_link)
+            return jsonify({
+                'bot_username': bot_username,
+                'bot_link': bot_link,
+                'qr_code': qr_code
+            })
+    except:
+        pass
+    
+    return jsonify({'error': 'Could not get bot info'}), 500
 
 # =============================================================================
 # Admin API Routes

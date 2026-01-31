@@ -445,3 +445,78 @@
         font-size: 2rem;
     }
 }
+
+/* =============================================================================
+   Telegram Integration
+   ============================================================================= */
+.telegram-section {
+    background: linear-gradient(135deg, #0088cc15, #0088cc08);
+    border: 2px solid #0088cc40;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.telegram-section h2 {
+    color: #0088cc;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.telegram-qr {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.telegram-qr-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+}
+
+.telegram-link {
+    color: #0088cc;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.telegram-messages {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.telegram-msg {
+    background: rgba(0, 136, 204, 0.1);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.msg-user {
+    color: #0088cc;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.msg-text {
+    color: #e0e0e0;
+    word-break: break-word;
+}
+
+.no-messages {
+    color: #888;
+    text-align: center;
+    font-style: italic;
+}

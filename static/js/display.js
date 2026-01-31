@@ -19,6 +19,8 @@ const spinningNames = document.getElementById('spinningNames');
 const winnersReveal = document.getElementById('winnersReveal');
 const winnerList = document.getElementById('winnerList');
 const confettiCanvas = document.getElementById('confettiCanvas');
+const telegramMessages = document.getElementById('telegramMessages');
+const telegramQr = document.getElementById('telegramQr');
 
 // Confetti setup
 const ctx = confettiCanvas.getContext('2d');
@@ -35,9 +37,12 @@ resizeCanvas();
 document.addEventListener('DOMContentLoaded', () => {
     updateRaffleInfo();
     loadHistory();
+    loadTelegramBotInfo();
+    loadTelegramMessages();
     setInterval(updateRaffleInfo, 2000);
     setInterval(updateCountdown, 1000);
     setInterval(checkForNewDraw, 3000);
+    setInterval(loadTelegramMessages, 3000);
 });
 
 // Update raffle information
@@ -326,4 +331,59 @@ function formatTime(isoString) {
 function getPositionEmoji(position) {
     const emojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
     return emojis[position - 1] || `${position}`;
+}
+
+// =============================================================================
+// Telegram Integration
+// =============================================================================
+async function loadTelegramBotInfo() {
+    try {
+        const response = await fetch('/api/telegram/bot-info');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.qr_code && telegramQr) {
+                telegramQr.innerHTML = `
+                    <p>Scan to send messages:</p>
+                    <img src="data:image/png;base64,${data.qr_code}" alt="Telegram Bot QR" class="telegram-qr-img">
+                    <p class="telegram-link">@${data.bot_username}</p>
+                `;
+            }
+        }
+    } catch (error) {
+        console.log('Telegram bot not configured');
+    }
+}
+
+async function loadTelegramMessages() {
+    try {
+        const response = await fetch('/api/telegram/messages?limit=5');
+        if (response.ok) {
+            const messages = await response.json();
+            updateTelegramDisplay(messages);
+        }
+    } catch (error) {
+        console.error('Error loading Telegram messages:', error);
+    }
+}
+
+function updateTelegramDisplay(messages) {
+    if (!telegramMessages) return;
+    
+    if (messages.length === 0) {
+        telegramMessages.innerHTML = '<p class="no-messages">Send a message via Telegram!</p>';
+        return;
+    }
+    
+    telegramMessages.innerHTML = messages.map(msg => `
+        <div class="telegram-msg">
+            <span class="msg-user">@${msg.username || 'user'}:</span>
+            <span class="msg-text">${escapeHtml(msg.message)}</span>
+        </div>
+    `).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
