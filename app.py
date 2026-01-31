@@ -345,17 +345,36 @@ def signup():
     if pin != admin_pin:
         return jsonify({'error': 'Invalid PIN. Ask admin to enter the PIN.'}), 403
     
-    # Check for duplicate phone in current raffle
+    # Check if phone already exists
     raffle = get_current_raffle()
-    existing = Participant.query.join(Entry).filter(
-        Entry.raffle_id == raffle.id,
-        Participant.phone == phone
-    ).first()
+    existing = Participant.query.filter_by(phone=phone).first()
     
     if existing:
-        return jsonify({'error': 'This phone number is already registered for the current raffle'}), 400
+        # Add to existing participant's wager
+        existing.wager_amount += wager
+        existing.name = name  # Update name in case it changed
+        db.session.commit()
+        
+        # Update their entry in current raffle
+        entry = Entry.query.filter_by(raffle_id=raffle.id, participant_id=existing.id).first()
+        if entry:
+            # Add more entries
+            new_entries = wager // 10
+            entry.entry_count += new_entries
+            raffle.total_pot += wager
+            db.session.commit()
+        else:
+            # Not in this raffle yet, add them
+            add_verified_participant_to_raffle(existing)
+        
+        total_chances = existing.wager_amount // 10
+        return jsonify({
+            'success': True,
+            'participant_id': existing.id,
+            'message': f'Added ${wager} more! {name} now has ${existing.wager_amount} total with {total_chances} chances to win!'
+        })
     
-    # Create participant (auto-verified since PIN was correct)
+    # Create new participant (auto-verified since PIN was correct)
     participant = Participant(
         name=name,
         phone=phone,
